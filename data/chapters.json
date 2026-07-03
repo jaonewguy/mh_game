@@ -1,5 +1,5 @@
 {
-  "flow": ["prologue", "story:prologue", "chapter:calm", "chapter:hope", "end"],
+  "flow": ["prologue", "story:prologue", "chapter:calm", "chapter:hope", "chapter:joy", "end"],
   "chapters": {
     "calm": {
       "title": "chapter one — calm",
@@ -12,6 +12,12 @@
       "emotion": "hope",
       "story": "hope",
       "levels": ["hope-1", "hope-2", "hope-3"]
+    },
+    "joy": {
+      "title": "chapter three — joy",
+      "emotion": "joy",
+      "story": "joy",
+      "levels": ["joy-1", "joy-2", "joy-3"]
     }
   }
 }

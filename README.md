@@ -23,6 +23,9 @@ clarity.
   pool of light around the figure; small lights flicker out in the
   black. Each one you reach joins you as a firefly and lets you see
   farther — until the way out appears.
+- **Chapter Three — Joy**: movement. The figure runs faster here and
+  leaves a trail of light — keep moving to fill the meter, then chase
+  a quick bright spark that flees and teases until you catch it.
 - Adaptive procedural score: an ambient bed that darkens with tension,
   swells with your breathing, a heartbeat pulse, and one generative
   voice per unlocked color.
@@ -102,7 +105,7 @@ node tools/shoot.cjs   # full playthrough, screenshots to tools/out
 
 ## Roadmap
 
-- Chapters 3–6 (joy, courage, warmth, clarity) — gated on the Chapter 2
+- Chapters 4–6 (courage, warmth, clarity) — gated on the Chapter 3
   playtest
 - Color bleed-in across previously visited spaces
 - Composed music stems layered over the procedural bed

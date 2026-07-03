@@ -89,27 +89,37 @@ export class MenuScene {
   }
 
   drawHelp(ctx, w, h) {
-    ctx.fillStyle = 'rgba(0,0,0,0.88)';
+    ctx.fillStyle = '#000';
     ctx.fillRect(0, 0, w, h);
-    text(ctx, 'how to play', w / 2, h * 0.2, 22, Palette.get('text'), 1, true);
+    text(ctx, 'how to play', w / 2, h * 0.16, 22, Palette.get('text'), 1, true);
 
+    // two aligned columns: right-aligned keys | left-aligned descriptions
     const lines = [
       ['move', 'arrow keys or WASD'],
-      ['breathe', 'hold SPACE while the ring grows, let go as it shrinks'],
-      ['', 'good breaths calm the world — watch the dots up top'],
-      ['in the dark', 'walk to the small lights. each one lets you see farther'],
+      ['breathe', 'hold SPACE as the ring grows · let go as it shrinks'],
+      ['', 'good breaths calm the world'],
+      ['in the dark', 'walk onto the ringed lights to gather them'],
       ['advance text', 'SPACE'],
       ['restart level', 'R'],
       ['menu', 'ESC'],
-      ['', 'your progress and colors are saved automatically'],
+      ['', 'progress and colors are saved automatically'],
     ];
-    let y = h * 0.32;
+    const colX = Math.max(w * 0.28, 130);
+    ctx.font = '300 14px "Courier New", monospace';
+    let y = h * 0.28;
     for (const [key, desc] of lines) {
-      if (key) text(ctx, key, w / 2 - 180, y, 14, Palette.get('text'));
-      text(ctx, desc, w / 2 + 60, y, 14, Palette.get('textFaint'));
-      y += 30;
+      if (key) {
+        ctx.textAlign = 'right';
+        ctx.fillStyle = Palette.get('text');
+        ctx.fillText(key, colX, y);
+      }
+      ctx.textAlign = 'left';
+      ctx.fillStyle = Palette.get('textFaint');
+      ctx.fillText(desc, colX + 24, y);
+      y += 32;
     }
+    ctx.textAlign = 'center';
     const pulse = 0.3 + Math.abs(Math.sin(this.t * 2)) * 0.25;
-    text(ctx, 'space — back', w / 2, h * 0.85, 12, `rgba(255,255,255,${pulse})`);
+    text(ctx, 'space — back', w / 2, y + 40, 12, `rgba(255,255,255,${pulse})`);
   }
 }

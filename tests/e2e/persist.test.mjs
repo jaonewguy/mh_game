@@ -17,9 +17,10 @@ test('unlock ceremony: color + music voice arrive, and both survive a reload', a
       assert.ok(music.voices.hope > 0, `hope voice should fade in: ${JSON.stringify(music.voices)}`);
     }
 
-    // ceremony flows onward on its own (generous: ~9s of game time can
-    // stretch under load since dt is clamped per frame)
-    await sceneIs(page, 'end', 40000);
+    // ceremony flows onward on its own — into the next chapter's story
+    // beat (generous timeout: ~9s of game time can stretch under load
+    // since dt is clamped per frame)
+    await sceneIs(page, 'story', 40000);
 
     await page.reload();
     await sceneIs(page, 'menu');
@@ -29,7 +30,7 @@ test('unlock ceremony: color + music voice arrive, and both survive a reload', a
       canContinue: window.__game.scene.options.some(o => o.label === 'continue'),
     }));
     assert.equal(persisted.hope, true);
-    assert.equal(persisted.node.type, 'end');
+    assert.equal(persisted.node.type, 'story');
     assert.equal(persisted.canContinue, true);
 
     assert.deepEqual(errors, []);

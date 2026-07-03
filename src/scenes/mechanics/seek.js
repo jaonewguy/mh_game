@@ -66,7 +66,14 @@ export class SeekMechanic {
         m.x += Math.sin(this.t * 0.4 + m.seed) * 6 * dt;
         m.z += Math.cos(this.t * 0.33 + m.seed * 1.7) * 6 * dt;
       }
-      if (Math.hypot(s.x - m.x, s.z - m.z) < 24) {
+      // lights lean toward whoever comes looking — generous pickup
+      const d = Math.hypot(s.x - m.x, s.z - m.z);
+      if (d < 85 && d > 1) {
+        const pull = 95 * dt;
+        m.x += ((s.x - m.x) / d) * pull;
+        m.z += ((s.z - m.z) / d) * pull;
+      }
+      if (d < 34) {
         m.found = true;
         this.collected++;
         this.glow += this.p.glowPerMote;
@@ -93,8 +100,19 @@ export class SeekMechanic {
 
     for (const m of this.motes) {
       if (m.found) continue;
-      const p = pr({ x: m.x, y: this.scene.floorY - 26, z: m.z });
       const flicker = 0.45 + Math.sin(this.t * 2.3 + m.seed * 7) * 0.25;
+
+      // a ring on the floor marks exactly where to stand
+      const g = pr({ x: m.x, y: this.scene.floorY, z: m.z });
+      const rr = 16 + Math.sin(this.t * 2 + m.seed) * 2;
+      ctx.beginPath();
+      ctx.ellipse(g.x, g.y, rr, rr * 0.5, 0, 0, Math.PI * 2);
+      ctx.strokeStyle = `rgba(255,255,255,${0.25 + flicker * 0.3})`;
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+
+      // the light itself hovers just above its spot
+      const p = pr({ x: m.x, y: this.scene.floorY - 14, z: m.z });
       const grad = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, 14);
       grad.addColorStop(0, `rgba(255,255,255,${flicker})`);
       grad.addColorStop(1, 'rgba(255,255,255,0)');
@@ -124,7 +142,7 @@ export class SeekMechanic {
   drawUI(ctx, w, h) {
     if (this.complete || this.collected > 0) return;
     if (this.t > 2 && this.t < 10) {
-      text(ctx, 'small lights wait in the dark. walk to them.', w / 2, h * 0.8, 14, Palette.get('textFaint'));
+      text(ctx, 'small lights wait in the dark — walk onto their rings', w / 2, h * 0.8, 14, Palette.get('textFaint'));
     }
   }
 }

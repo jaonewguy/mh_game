@@ -33,6 +33,7 @@ export class BreathMechanic {
     this.verdict = null; // { msg, t }
     this.state = def.tutorial ? 'watch' : 'alone';
     this.stateT = 0;
+    this.prevK = 0;
 
     scene.tremorLevel = this.p.effect !== 'walls' ? (this.p.tremor || 0.8) : 0;
     this.baseTremor = scene.tremorLevel;
@@ -131,6 +132,13 @@ export class BreathMechanic {
         break;
       }
     }
+
+    // A soft tone marks every turn of the breath — a rising note when
+    // it's time to hold, a falling one when it's time to let go.
+    const k = this.breathK();
+    if (this.prevK <= 0 && k > 0) Sfx.cueIn();
+    if (this.prevK >= 0 && k < 0) Sfx.cueOut();
+    this.prevK = k;
   }
 
   goodCycle() {
@@ -207,6 +215,23 @@ export class BreathMechanic {
       ctx.strokeStyle = 'rgba(255,255,255,0.18)';
       ctx.lineWidth = 6;
       ctx.stroke();
+    }
+
+    // The word itself, floating by the figure: "hold" on the inhale,
+    // "let go" on the exhale. Shown until breathing is clearly learned
+    // (two good cycles this level), and again whenever out of sync.
+    const learning = this.cycles < 2;
+    const offSync = this.engaged && holding !== (k > 0);
+    if (this.state !== 'watch' && (learning || offSync)) {
+      const head = pr({ x: s.x, y: s.y - 62, z: s.z });
+      const word = k > 0 ? 'hold' : 'let go';
+      ctx.font = '300 15px "Courier New", monospace';
+      ctx.textAlign = 'center';
+      ctx.lineWidth = 4;
+      ctx.strokeStyle = 'rgba(0,0,0,0.8)';
+      ctx.strokeText(word, head.x, head.y);
+      ctx.fillStyle = `rgba(255,255,255,${matching ? 0.95 : 0.6})`;
+      ctx.fillText(word, head.x, head.y);
     }
   }
 

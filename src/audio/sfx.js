@@ -44,4 +44,6 @@ export const Sfx = {
   good()   { tone(523.25, 0.1, 0.5); tone(659.25, 0.08, 0.7); },  // C5 + E5
   miss()   { tone(196, 0.07, 0.35, 'triangle'); },                // soft low G
   spark()  { tone(880, 0.08, 0.25); tone(1318.5, 0.06, 0.6); },   // a small light found
+  cueIn()  { tone(587.3, 0.05, 0.35); },                          // the inhale begins
+  cueOut() { tone(349.2, 0.05, 0.45); },                          // the exhale begins
 };

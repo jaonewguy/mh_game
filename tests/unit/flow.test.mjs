@@ -14,10 +14,11 @@ test('flow: builds the node spine from the real chapters.json', async () => {
   Flow.build();
   const types = Flow.nodes.map(n => n.type);
 
-  // prologue -> its story -> calm (story + 3 levels + unlock)
-  //          -> hope (story + 3 levels + unlock) -> end
+  // prologue -> its story -> calm -> hope -> joy (each: story + 3
+  // levels + unlock) -> end
   assert.deepEqual(types, [
     'prologue', 'story',
+    'story', 'level', 'level', 'level', 'unlock',
     'story', 'level', 'level', 'level', 'unlock',
     'story', 'level', 'level', 'level', 'unlock',
     'end',

@@ -1,0 +1,189 @@
+/*
+ * Joy mechanic (Chapter 3).
+ *
+ * Joy is movement. The figure runs faster here and leaves a fading
+ * trail of light. Two modes, set per level:
+ *
+ *   mode "move"  — keep moving: motion fills the meter, standing
+ *                  still drains it. Stillness was the last chapter's
+ *                  lesson; this one is the opposite.
+ *   mode "chase" — a quick bright spark wants to play. It teases,
+ *                  flees when you rush it, wanders when you don't.
+ *                  Catch it the required number of times.
+ *
+ * Level params: { mode, seconds?, catches?, sparkSpeed?, drain? }
+ */
+import { text } from '../../render/draw.js';
+import { Palette } from '../../palette.js';
+import { Sfx } from '../../audio/sfx.js';
+import { Music } from '../../audio/music.js';
+
+export class JoyMechanic {
+  constructor(scene, def) {
+    this.scene = scene;
+    this.p = def.params;
+    this.complete = false;
+    this.t = 0;
+    this.moveSpeed = 285; // the runner reads this — joy is quick
+    this.trail = [];
+    this.meter = 0;
+    this.catches = 0;
+    scene.tremorLevel = 0;
+
+    if (this.p.mode === 'chase') this.spark = this.spawnSpark();
+  }
+
+  spawnSpark() {
+    const s = this.scene.stick;
+    const R = this.scene.room.floorHalf * 0.8;
+    let x = 0, z = 0, guard = 0;
+    do {
+      const a = Math.random() * Math.PI * 2;
+      const r = R * (0.5 + Math.random() * 0.5);
+      x = Math.cos(a) * r;
+      z = Math.sin(a) * r;
+    } while (Math.hypot(x - s.x, z - s.z) < 160 && guard++ < 50);
+    return { x, z, vx: 0, vz: 0, wanderT: 0, wx: 0, wz: 0 };
+  }
+
+  progress() {
+    return this.p.mode === 'move'
+      ? { done: Math.min(Math.floor(this.meter), this.p.seconds), total: this.p.seconds }
+      : { done: this.catches, total: this.p.catches };
+  }
+
+  update(dt) {
+    this.t += dt;
+    const s = this.scene.stick;
+
+    // the trail: light remembers where you ran
+    if (s.moving) {
+      const last = this.trail[this.trail.length - 1];
+      if (!last || Math.hypot(s.x - last.x, s.z - last.z) > 9) {
+        this.trail.push({ x: s.x, z: s.z, life: 0.7 });
+      }
+    }
+    for (const q of this.trail) q.life -= dt;
+    this.trail = this.trail.filter(q => q.life > 0);
+
+    if (this.complete) return;
+
+    if (this.p.mode === 'move') {
+      this.meter += s.moving ? dt : -dt * (this.p.drain || 1.2);
+      this.meter = Math.max(0, this.meter);
+      Music.setMood({
+        tension: this.scene.def.mood.tension * (1 - this.meter / this.p.seconds),
+      });
+      if (this.meter >= this.p.seconds) this.finish();
+      return;
+    }
+
+    // ---- chase ----
+    const sp = this.spark;
+    const dx = sp.x - s.x, dz = sp.z - s.z;
+    const d = Math.hypot(dx, dz);
+    const speed = 250 * (this.p.sparkSpeed || 1);
+
+    if (d < 150) {
+      // flee, but playfully — never in a dead-straight line
+      const away = Math.atan2(-dz, -dx) + Math.sin(this.t * 3) * 0.7;
+      sp.vx += Math.cos(away) * 900 * dt;
+      sp.vz += Math.sin(away) * 900 * dt;
+    } else {
+      // wander toward a whim, re-chosen every couple of seconds
+      sp.wanderT -= dt;
+      if (sp.wanderT <= 0) {
+        sp.wanderT = 1.5 + Math.random() * 1.5;
+        const R = this.scene.room.floorHalf * 0.75;
+        sp.wx = (Math.random() - 0.5) * 2 * R;
+        sp.wz = (Math.random() - 0.5) * 2 * R;
+      }
+      sp.vx += (sp.wx - sp.x) * 0.8 * dt;
+      sp.vz += (sp.wz - sp.z) * 0.8 * dt;
+    }
+
+    const v = Math.hypot(sp.vx, sp.vz);
+    if (v > speed) { sp.vx = (sp.vx / v) * speed; sp.vz = (sp.vz / v) * speed; }
+    sp.x += sp.vx * dt;
+    sp.z += sp.vz * dt;
+
+    // stay inside the glass — bounce softly off the walls
+    const lim = this.scene.room.half - 20;
+    if (Math.abs(sp.x) > lim) { sp.x = Math.sign(sp.x) * lim; sp.vx *= -0.6; }
+    if (Math.abs(sp.z) > lim) { sp.z = Math.sign(sp.z) * lim; sp.vz *= -0.6; }
+
+    if (d < 30) {
+      this.catches++;
+      Sfx.spark();
+      this.scene.dust.burst(sp.x, this.scene.floorY, sp.z, 10, 120);
+      Music.setMood({
+        tension: this.scene.def.mood.tension * (1 - this.catches / this.p.catches),
+      });
+      if (this.catches >= this.p.catches) this.finish();
+      else this.spark = this.spawnSpark();
+    }
+  }
+
+  finish() {
+    this.complete = true;
+    Sfx.good();
+  }
+
+  figurePose() { return null; } // run/idle — the running IS the pose
+
+  drawWorld(ctx, pr) {
+    // the trail, drawn on the floor as fading light
+    if (this.trail.length > 1) {
+      for (let i = 1; i < this.trail.length; i++) {
+        const a = this.trail[i - 1], b = this.trail[i];
+        const pa = pr({ x: a.x, y: this.scene.floorY - 1, z: a.z });
+        const pb = pr({ x: b.x, y: this.scene.floorY - 1, z: b.z });
+        const alpha = Math.min(1, b.life / 0.7);
+        ctx.beginPath();
+        ctx.moveTo(pa.x, pa.y);
+        ctx.lineTo(pb.x, pb.y);
+        ctx.strokeStyle = `rgba(0,0,0,${0.35 * alpha})`;
+        ctx.lineWidth = 5;
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(pa.x, pa.y);
+        ctx.lineTo(pb.x, pb.y);
+        ctx.strokeStyle = `rgba(255,255,255,${0.55 * alpha})`;
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      }
+    }
+
+    if (this.spark && !this.complete) {
+      const sp = this.spark;
+      // ground ring so its position on the floor is readable
+      const g = pr({ x: sp.x, y: this.scene.floorY, z: sp.z });
+      ctx.beginPath();
+      ctx.ellipse(g.x, g.y, 10, 5, 0, 0, Math.PI * 2);
+      ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+      // the spark itself, hovering and shimmering
+      const p = pr({ x: sp.x, y: this.scene.floorY - 22 + Math.sin(this.t * 6) * 4, z: sp.z });
+      const grad = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, 16);
+      grad.addColorStop(0, 'rgba(255,255,255,0.9)');
+      grad.addColorStop(1, 'rgba(255,255,255,0)');
+      ctx.fillStyle = grad;
+      ctx.fillRect(p.x - 16, p.y - 16, 32, 32);
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, 2.5, 0, Math.PI * 2);
+      ctx.fillStyle = '#fff';
+      ctx.fill();
+    }
+  }
+
+  drawUI(ctx, w, h) {
+    if (this.complete) return;
+    if (this.p.mode === 'move' && this.t > 2 && this.meter < 2) {
+      text(ctx, 'run. don’t stop.', w / 2, h * 0.8, 14, Palette.get('textFaint'));
+    }
+    if (this.p.mode === 'chase' && this.catches === 0 && this.t > 2 && this.t < 10) {
+      text(ctx, 'catch it', w / 2, h * 0.8, 14, Palette.get('textFaint'));
+    }
+  }
+}

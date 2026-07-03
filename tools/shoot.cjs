@@ -125,18 +125,34 @@ const OUT = process.env.OUT || `${__dirname}/out`;
   await page.waitForTimeout(1500);
   await shot('09_hope_dark');
 
+  // ---- joy: the spark and the running trail ----
+  await page.waitForTimeout(500);
+  await page.evaluate(() => window.__flow.enter(window.__game, { type: 'level', chapter: 'joy', index: 1 }));
+  // match on the chapter too — the previous level scene also satisfies
+  // sceneName === 'level' while the transition is still in flight
+  await page.waitForFunction(
+    () => window.__game.sceneName === 'level'
+      && window.__game.scene.node.chapter === 'joy'
+      && window.__game.scene.state !== 'intro',
+    null, { timeout: 15000 }
+  );
+  await page.keyboard.down('ArrowLeft');
+  await page.waitForTimeout(900);
+  await page.keyboard.up('ArrowLeft');
+  await shot('10_joy_spark');
+
   // ---- end scene ----
   await page.waitForTimeout(500);
   await page.evaluate(() => window.__flow.enter(window.__game, { type: 'end' }));
   await sceneIs('end', 20000);
   await page.waitForTimeout(1800);
-  await shot('10_end');
+  await shot('11_end');
 
   // ---- reload: continue should resume from the saved node ----
   await page.reload();
   await sceneIs('menu');
   await page.waitForTimeout(600);
-  await shot('11_menu_continue');
+  await shot('12_menu_continue');
   const stillUnlocked = await page.evaluate(() => window.__palette.isUnlocked('calm'));
   if (!stillUnlocked) errors.push('calm unlock did not persist across reload');
 

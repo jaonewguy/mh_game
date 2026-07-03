@@ -25,8 +25,12 @@ import { Sfx } from '../audio/sfx.js';
 import { Music } from '../audio/music.js';
 import { BreathMechanic } from './mechanics/breath.js';
 import { SeekMechanic } from './mechanics/seek.js';
+import { JoyMechanic } from './mechanics/joy.js';
 
-const MECHANICS = { breath: BreathMechanic, seek: SeekMechanic };
+const MECHANICS = { breath: BreathMechanic, seek: SeekMechanic, joy: JoyMechanic };
+
+// the word each mechanic earns when its level goes quiet
+const COMPLETE_WORD = { breath: 'still.', seek: 'lighter.', joy: 'alive.' };
 
 export class LevelScene {
   constructor(game, { node }) {
@@ -92,9 +96,10 @@ export class LevelScene {
     const s = this.stick;
     s.moving = mx !== 0 || mz !== 0;
     if (s.moving) {
+      const spd = this.mech.moveSpeed || 240;
       s.yaw = Math.atan2(mz, mx);
-      s.x += mx * 240 * dt;
-      s.z += mz * 240 * dt;
+      s.x += mx * spd * dt;
+      s.z += mz * spd * dt;
     }
     this.room.clamp(s);
     s.y = this.floorY - Stick.hipHeight(s.moving ? 0.12 : 0.06, s.scale);
@@ -251,7 +256,7 @@ export class LevelScene {
     if (this.state === 'play' && this.mech.drawUI) this.mech.drawUI(ctx, w, h);
     if (this.state === 'complete') {
       const a = Math.min(this.t / 0.8, 1);
-      text(ctx, this.def.mechanic === 'seek' ? 'lighter.' : 'still.', w / 2, h * 0.16, 20, Palette.get('text'), a);
+      text(ctx, COMPLETE_WORD[this.def.mechanic] || 'done.', w / 2, h * 0.16, 20, Palette.get('text'), a);
       text(ctx, 'walk to the light', w / 2, h * 0.88, 13, Palette.get('textFaint'), a);
     }
   }
