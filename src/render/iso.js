@@ -12,14 +12,17 @@
  * is just this transform, which keeps the engine dependency-free and
  * the line-art aesthetic intact.
  */
-window.MH = window.MH || {};
 
-MH.Iso = {
-  // cam = { ox, oy: screen origin, y: vertical camera scroll }
-  project(p, cam) {
-    return {
-      x: cam.ox + (p.x - p.z),
-      y: cam.oy + (p.x + p.z) * 0.5 + p.y - cam.y,
-    };
-  },
-};
+// cam = { ox, oy: screen origin, y: vertical camera scroll }
+export function project(p, cam) {
+  return {
+    x: cam.ox + (p.x - p.z),
+    y: cam.oy + (p.x + p.z) * 0.5 + p.y - cam.y,
+  };
+}
+
+// Convenience: a projector function bound to a camera.
+export function projector(canvas, camY) {
+  const cam = { ox: canvas.width / 2, oy: 0, y: camY };
+  return (p) => project(p, cam);
+}

@@ -1,0 +1,11 @@
+{
+  "flow": ["prologue", "story:prologue", "chapter:calm", "end"],
+  "chapters": {
+    "calm": {
+      "title": "chapter one — calm",
+      "emotion": "calm",
+      "story": "calm",
+      "levels": ["calm-1", "calm-2", "calm-3"]
+    }
+  }
+}

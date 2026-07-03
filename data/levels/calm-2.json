@@ -1,0 +1,9 @@
+{
+  "id": "calm-2",
+  "title": "the small room",
+  "mechanic": "breath",
+  "mood": { "tension": 0.7 },
+  "room": { "startScale": 0.35 },
+  "params": { "cycleSec": 6, "cyclesNeeded": 4, "effect": "walls" },
+  "hint": "the walls listen to your breath"
+}

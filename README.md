@@ -1,63 +1,85 @@
-# mh_game (working title: *Chroma*)
+# Chroma (working title)
 
 A game about mental health, told through color — or the absence of it.
 
-The world begins in pure black and white. Each scene is a visual metaphor
-for a mental-health challenge; working through it lets the player reclaim
-an **emotion**, which unlocks a **color** that begins to bleed back into
-the world. Six colors, six emotions: calm, hope, joy, courage, warmth,
+The world begins in pure black and white. Each chapter is a visual
+metaphor for a mental-health challenge; working through it lets the
+player reclaim an **emotion**, which unlocks a **color** that begins to
+bleed back into the world — and adds that emotion's **voice** to the
+music. Six colors, six emotions: calm, hope, joy, courage, warmth,
 clarity.
 
-## Scene I — The Fall (isometric branch)
+## Current build
 
-A stickman falls through empty black space and lands in a cube: a solid
-white floor and transparent walls. Every second, the four walls slam
-inward. There is nowhere to go. Fade to black — end of scene.
-
-This branch renders the scene in true 3D (x/z ground plane, y for the
-fall) through a hand-rolled 2:1 isometric projection (`js/iso.js`) —
-still a plain 2D canvas, still zero dependencies. The figure moves in
-four directions and a contact shadow sells the depth during the fall.
-
-*(The feeling of the world closing in. No color is unlocked here yet —
-the journey starts colorless.)*
+- **Prologue — The Fall**: a stickman falls through black space into a
+  glass cube; every second the walls slam inward. The world closes in.
+- **Chapter One — Calm**: the breathing mechanic. A ring pulses around
+  the figure with the music's swell; breathe with it (hold SPACE as it
+  grows, release as it shrinks) to steady a trembling room, push
+  closed-in walls back open, and finally reclaim the first color.
+- Adaptive procedural score: an ambient bed that darkens with tension,
+  a heartbeat pulse, and one generative voice per unlocked color.
+- Progress (colors + position) persists; continue from the menu.
 
 ## Running the game
 
-No build step, no dependencies. Either open `index.html` directly in a
-browser, or serve the folder:
+No build step, no dependencies — but ES modules need a server:
 
 ```sh
-python3 -m http.server 8000
-# then open http://localhost:8000
+python3 -m http.server 8010
+# open http://localhost:8010
 ```
 
 ## Controls
 
 | Key | Action |
 | --- | --- |
-| Arrows or W A S D | Move on the ground plane, screen-relative (slight air control while falling) |
-| R | Restart the scene |
+| Arrows / WASD | Move (screen-relative on the isometric floor) |
+| Space | Breathe (and advance text) |
+| Enter | Confirm |
+| R | Restart level / prologue |
+| Esc | Back to menu |
 
 ## Structure
 
 ```
-index.html        entry point
-css/style.css     fullscreen black canvas
-js/palette.js     color-unlock system (localStorage-persisted) + role-based colors
-js/audio.js       procedural WebAudio thuds (landing, wall slams)
-js/iso.js         2:1 isometric projection (world x/z ground plane, y down)
-js/stickman.js    procedurally animated 3D stick figure (fall / crouch / idle / run poses)
-js/scene1.js      Scene I state machine: falling -> landing -> settle -> walls -> end
-js/main.js        game loop, input, palette HUD
+index.html            entry point
+src/
+  core/               game loop + scene manager, input action map,
+                      save (localStorage), data loader, flow (chapters spine)
+  render/             iso projection, draw primitives, Room (glass cube),
+                      particles, stick figure (procedural poses)
+  audio/              shared AudioContext + master bus, procedural SFX,
+                      adaptive music engine (bed / pulse / emotion voices / stems)
+  scenes/             menu, prologue, storybeat, level runner, unlock, end
+  palette.js          color-unlock system, role-based colors
+data/
+  chapters.json       chapter + flow definitions
+  levels/*.json       level definitions (mechanic params, mood, room)
+  story/*.json        monologue lines between scenes
+tools/
+  shoot.js            Playwright playthrough smoke test + screenshots
 ```
 
-All drawing colors are requested through `MH.Palette.get(role)`, so when
-an emotion is unlocked later, assigning it to a role recolors the world
-with no changes to scene code.
+Design rules that keep the project portable and vibe-codeable:
+
+- **All drawing goes through `Palette.get(role)`** — unlocking an
+  emotion recolors the world with no scene changes.
+- **The renderer is a thin layer** (`src/render/`) — a future Three.js
+  port swaps that directory, nothing else.
+- **Content is data** (`data/`) — new levels and story are JSON edits.
+
+## Testing
+
+```sh
+python3 -m http.server 8010 &
+node tools/shoot.js   # plays the game end-to-end, screenshots to tools/out
+```
 
 ## Roadmap
 
-- Scene II+: challenges that unlock the first color
-- Color bleed-in effect when an emotion is reclaimed
-- Persistent scene progression / scene select
+- Chapters 2–6 (hope, joy, courage, warmth, clarity) — gated on the
+  Chapter 1 playtest
+- Color bleed-in across previously visited spaces
+- Composed music stems layered over the procedural bed
+- Touch controls + itch.io packaging
