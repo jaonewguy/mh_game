@@ -8,11 +8,16 @@ an **emotion**, which unlocks a **color** that begins to bleed back into
 the world. Six colors, six emotions: calm, hope, joy, courage, warmth,
 clarity.
 
-## Scene I — The Fall
+## Scene I — The Fall (isometric branch)
 
 A stickman falls through empty black space and lands in a cube: a solid
-white floor and transparent walls. Every second, the walls slam inward.
-There is nowhere to go. Fade to black — end of scene.
+white floor and transparent walls. Every second, the four walls slam
+inward. There is nowhere to go. Fade to black — end of scene.
+
+This branch renders the scene in true 3D (x/z ground plane, y for the
+fall) through a hand-rolled 2:1 isometric projection (`js/iso.js`) —
+still a plain 2D canvas, still zero dependencies. The figure moves in
+four directions and a contact shadow sells the depth during the fall.
 
 *(The feeling of the world closing in. No color is unlocked here yet —
 the journey starts colorless.)*
@@ -31,7 +36,7 @@ python3 -m http.server 8000
 
 | Key | Action |
 | --- | --- |
-| ← / → or A / D | Move (slight air control while falling) |
+| Arrows or W A S D | Move on the ground plane, screen-relative (slight air control while falling) |
 | R | Restart the scene |
 
 ## Structure
@@ -41,7 +46,8 @@ index.html        entry point
 css/style.css     fullscreen black canvas
 js/palette.js     color-unlock system (localStorage-persisted) + role-based colors
 js/audio.js       procedural WebAudio thuds (landing, wall slams)
-js/stickman.js    procedurally animated stick figure (fall / crouch / idle / run poses)
+js/iso.js         2:1 isometric projection (world x/z ground plane, y down)
+js/stickman.js    procedurally animated 3D stick figure (fall / crouch / idle / run poses)
 js/scene1.js      Scene I state machine: falling -> landing -> settle -> walls -> end
 js/main.js        game loop, input, palette HUD
 ```

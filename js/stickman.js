@@ -1,13 +1,18 @@
 /*
- * Stickman — a procedurally animated stick figure.
+ * Stickman — a procedurally animated stick figure, now living in 3D.
  *
- * The figure is defined by joint angles rather than sprites, so poses
- * (falling, landing, idle, running) blend smoothly and stay crisp at
- * any resolution.
+ * The skeleton is defined by joint angles inside a vertical plane that
+ * faces the figure's yaw (movement direction); joints are computed as
+ * 3D points and projected through the isometric camera. Poses (falling,
+ * landing, idle, running) are unchanged from the 2D version.
  *
  * Angle convention: limb angles are measured from "straight down",
- * positive angles swing toward +x (screen right). The torso angle is
- * measured from "straight up".
+ * positive angles swing toward the facing direction. The torso angle
+ * is measured from "straight up". World y points down.
+ *
+ * Every stroke is drawn twice — a thick black halo, then the line
+ * color — so the figure stays readable when it overlaps the solid
+ * white floor.
  */
 window.MH = window.MH || {};
 
@@ -17,62 +22,76 @@ MH.Stickman = (function () {
   // Proportions relative to H
   const TORSO = 0.34, ARM = 0.17, LEG = 0.24, HEAD_R = 0.115;
 
-  function seg(from, angle, len) {
-    return { x: from.x + Math.sin(angle) * len, y: from.y + Math.cos(angle) * len };
-  }
-
   /*
    * pose = {
-   *   x, y        : hip position
+   *   x, y, z     : hip position (world, y down)
+   *   yaw         : facing direction on the ground plane
    *   scale       : size multiplier
    *   torso       : lean angle from vertical
    *   armL, armR  : [shoulderAngle, elbowAngle]  (absolute, from straight-down)
    *   legL, legR  : [hipAngle, kneeAngle]        (absolute, from straight-down)
    * }
    */
-  function draw(ctx, pose, color, lineWidth) {
+  function draw(ctx, project, pose, color, lineWidth) {
     const s = (pose.scale || 1) * H;
-    const hip = { x: pose.x, y: pose.y };
+    const yaw = pose.yaw || 0;
+    const f = { x: Math.cos(yaw), z: Math.sin(yaw) }; // facing on ground plane
+
+    const seg = (from, angle, len) => ({
+      x: from.x + f.x * Math.sin(angle) * len,
+      y: from.y + Math.cos(angle) * len,
+      z: from.z + f.z * Math.sin(angle) * len,
+    });
+
+    const hip = { x: pose.x, y: pose.y, z: pose.z };
     const t = pose.torso || 0;
+    const neck = {
+      x: hip.x + f.x * Math.sin(t) * TORSO * s,
+      y: hip.y - Math.cos(t) * TORSO * s,
+      z: hip.z + f.z * Math.sin(t) * TORSO * s,
+    };
+    const headC = {
+      x: neck.x + f.x * Math.sin(t) * HEAD_R * 1.3 * s,
+      y: neck.y - Math.cos(t) * HEAD_R * 1.3 * s,
+      z: neck.z + f.z * Math.sin(t) * HEAD_R * 1.3 * s,
+    };
+    const shoulder = {
+      x: hip.x + (neck.x - hip.x) * 0.92,
+      y: hip.y + (neck.y - hip.y) * 0.92,
+      z: hip.z + (neck.z - hip.z) * 0.92,
+    };
 
-    const neck = { x: hip.x + Math.sin(t) * TORSO * s, y: hip.y - Math.cos(t) * TORSO * s };
-    const headC = { x: neck.x + Math.sin(t) * HEAD_R * 1.3 * s, y: neck.y - Math.cos(t) * HEAD_R * 1.3 * s };
-    const shoulder = { x: hip.x + (neck.x - hip.x) * 0.92, y: hip.y + (neck.y - hip.y) * 0.92 };
-
-    ctx.strokeStyle = color;
-    ctx.lineWidth = lineWidth;
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
-
-    ctx.beginPath();
-    // torso
-    ctx.moveTo(hip.x, hip.y);
-    ctx.lineTo(neck.x, neck.y);
-    // arms
+    // Collect polylines in 3D, project once, stroke twice (halo + line).
+    const lines = [[hip, neck]];
     for (const arm of [pose.armL, pose.armR]) {
       const elbow = seg(shoulder, arm[0], ARM * s);
-      const hand = seg(elbow, arm[1], ARM * s);
-      ctx.moveTo(shoulder.x, shoulder.y);
-      ctx.lineTo(elbow.x, elbow.y);
-      ctx.lineTo(hand.x, hand.y);
+      lines.push([shoulder, elbow, seg(elbow, arm[1], ARM * s)]);
     }
-    // legs
     for (const leg of [pose.legL, pose.legR]) {
       const knee = seg(hip, leg[0], LEG * s);
-      const foot = seg(knee, leg[1], LEG * s);
-      ctx.moveTo(hip.x, hip.y);
-      ctx.lineTo(knee.x, knee.y);
-      ctx.lineTo(foot.x, foot.y);
+      lines.push([hip, knee, seg(knee, leg[1], LEG * s)]);
     }
-    ctx.stroke();
+    const projected = lines.map(line => line.map(project));
+    const head = project(headC);
 
-    // head
-    ctx.beginPath();
-    ctx.arc(headC.x, headC.y, HEAD_R * s, 0, Math.PI * 2);
-    ctx.stroke();
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    for (const [strokeColor, lw] of [['#000', lineWidth * 2.4], [color, lineWidth]]) {
+      ctx.strokeStyle = strokeColor;
+      ctx.lineWidth = lw;
+      ctx.beginPath();
+      for (const line of projected) {
+        ctx.moveTo(line[0].x, line[0].y);
+        for (let i = 1; i < line.length; i++) ctx.lineTo(line[i].x, line[i].y);
+      }
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(head.x, head.y, HEAD_R * s, 0, Math.PI * 2);
+      ctx.stroke();
+    }
   }
 
-  // ---- Pose generators ------------------------------------------------
+  // ---- Pose generators (identical to the 2D version) -------------------
 
   // Flailing freefall. t is elapsed time in seconds.
   function poseFall(t) {
@@ -110,16 +129,16 @@ MH.Stickman = (function () {
     };
   }
 
-  // Running. t drives the stride, dir is -1 (left) or 1 (right).
-  function poseRun(t, dir) {
+  // Running. t drives the stride; direction comes from the pose yaw.
+  function poseRun(t) {
     const p = t * 11;
     const s1 = Math.sin(p), s2 = Math.sin(p + Math.PI);
     return {
-      torso: 0.22 * dir,
-      armL: [dir * (0.6 * s2), dir * (0.6 * s2 - 0.5)],
-      armR: [dir * (0.6 * s1), dir * (0.6 * s1 - 0.5)],
-      legL: [dir * (0.65 * s1), dir * (0.65 * s1 - 0.45)],
-      legR: [dir * (0.65 * s2), dir * (0.65 * s2 - 0.45)],
+      torso: 0.22,
+      armL: [0.6 * s2, 0.6 * s2 - 0.5],
+      armR: [0.6 * s1, 0.6 * s1 - 0.5],
+      legL: [0.65 * s1, 0.65 * s1 - 0.45],
+      legR: [0.65 * s2, 0.65 * s2 - 0.45],
     };
   }
 
