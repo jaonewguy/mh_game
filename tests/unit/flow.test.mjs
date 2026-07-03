@@ -41,3 +41,27 @@ test('flow: builds the node spine from the real chapters.json', async () => {
     assert.ok(fs.existsSync(new URL(`../../data/levels/${id}.json`, import.meta.url)), `missing level file ${id}`);
   }
 });
+
+test('flow: an "end" save routes into the first chapter with a locked color', async () => {
+  const { Flow } = await import('../../src/core/flow.js');
+  const { Data } = await import('../../src/core/data.js');
+  const { Save } = await import('../../src/core/save.js');
+  const { Palette } = await import('../../src/palette.js');
+  Data.chapters = JSON.parse(fs.readFileSync(new URL('../../data/chapters.json', import.meta.url)));
+  Flow.build();
+
+  const fakeGame = { goto: (name, params) => { fakeGame.went = { name, params }; } };
+
+  // an old save from a two-chapter build: calm+hope done, sitting at end
+  Palette.resetAll();
+  Palette.unlock('calm');
+  Palette.unlock('hope');
+  Flow.enter(fakeGame, { type: 'end' });
+  assert.deepEqual(Save.data.node, { type: 'story', id: 'joy' }, 'continue should route into chapter three');
+
+  // all shipped chapters finished -> the end card is really the end
+  Palette.unlock('joy');
+  Flow.enter(fakeGame, { type: 'end' });
+  assert.deepEqual(Save.data.node, { type: 'end' });
+  Palette.resetAll();
+});

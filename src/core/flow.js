@@ -11,6 +11,7 @@
  */
 import { Save } from './save.js';
 import { Data } from './data.js';
+import { Palette } from '../palette.js';
 
 export const Flow = {
   nodes: [],
@@ -44,6 +45,15 @@ export const Flow = {
 
   // Enter a node: persist it as the resume point and switch scenes.
   enter(game, node) {
+    // The game grows chapter by chapter. If a save (or an advance)
+    // lands on "end" while chapters with still-locked colors exist —
+    // e.g. a save from an older build — route into the first
+    // unfinished chapter instead of the end card.
+    if (node.type === 'end') {
+      const pending = Object.values(Data.chapters.chapters)
+        .find(ch => !Palette.isUnlocked(ch.emotion));
+      if (pending) node = { type: 'story', id: pending.story };
+    }
     Save.setNode(node);
     switch (node.type) {
       case 'prologue': game.goto('prologue'); break;
