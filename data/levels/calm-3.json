@@ -4,6 +4,6 @@
   "mechanic": "breath",
   "mood": { "tension": 0.85 },
   "room": { "startScale": 0.5 },
-  "params": { "cycleSec": 5, "cyclesNeeded": 5, "effect": "both", "tremor": 1.0 },
-  "hint": ""
+  "params": { "cycleSec": 4, "cyclesNeeded": 5, "effect": "both", "tremor": 1.0 },
+  "intro": "everything at once. stay slow."
 }

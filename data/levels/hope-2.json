@@ -1,0 +1,9 @@
+{
+  "id": "hope-2",
+  "title": "farther",
+  "mechanic": "seek",
+  "mood": { "tension": 0.7 },
+  "room": { "startScale": 1.0 },
+  "params": { "motes": 4, "glow": 115, "glowPerMote": 40, "drift": true },
+  "intro": "some lights wander. follow anyway."
+}

@@ -1,15 +1,14 @@
 /*
  * Level — the generic level runner. Reads a definition from
- * data/levels/*.json and stages it in the glass room.
+ * data/levels/*.json, stages it in the glass room, and delegates the
+ * challenge itself to a mechanic module (mechanics/*.js):
  *
- * Mechanic: "breath" (Chapter 1 — calm)
- * ------------------------------------
- * A breathing ring pulses on the floor around the figure with the
- * music's swell. The player holds SPACE while the ring grows (inhale)
- * and releases while it shrinks (exhale). Each well-breathed cycle
- * calms the room — steadying its tremor, or pushing the closed-in
- * walls back open — depending on the level's `effect`. When enough
- * cycles are complete, an exit of light appears.
+ *   breath — Chapter 1, calm  (breathe with the ring)
+ *   seek   — Chapter 2, hope  (find the lights in the dark)
+ *
+ * The runner owns: intro card, movement, the room, the darkness mask
+ * (for mechanics that set `darkness`), exit spawning and the walk to
+ * it, progress dots, restart/back.
  *
  * States: intro -> play -> complete (walk to the exit)
  */
@@ -24,6 +23,10 @@ import { contactShadow, text, quadPath } from '../render/draw.js';
 import { Palette } from '../palette.js';
 import { Sfx } from '../audio/sfx.js';
 import { Music } from '../audio/music.js';
+import { BreathMechanic } from './mechanics/breath.js';
+import { SeekMechanic } from './mechanics/seek.js';
+
+const MECHANICS = { breath: BreathMechanic, seek: SeekMechanic };
 
 export class LevelScene {
   constructor(game, { node }) {
@@ -41,16 +44,9 @@ export class LevelScene {
     this.stick = { x: 0, z: 0, y: 0, yaw: -Math.PI / 2, moving: false, scale: 1.15 };
     this.floorY = 0;
     this.shake = 0;
-
-    const p = this.def.params;
-    this.cycleT = 0;
-    this.align = 0;
-    this.engaged = false;      // has the player breathed at all this cycle
-    this.cycles = 0;
-    this.needed = p.cyclesNeeded;
-    this.tremorLevel = p.effect !== 'walls' ? (p.tremor || 0.8) : 0;
-    this.hintUntilFirstGood = true;
+    this.tremorLevel = 0;
     this.exit = null;
+    this.darkFade = 1; // darkness strength while a dark mechanic runs
 
     this.room = new Room({
       floorHalf: this.roomHalf(), wallH: this.wallHeight(), floorY: this.floorY,
@@ -62,15 +58,15 @@ export class LevelScene {
 
     this.dust = new DustField();
     Music.setMood({ tension: this.def.mood.tension });
+
+    this.mech = new MECHANICS[this.def.mechanic](this, this.def);
   }
 
   roomHalf()   { return Math.min(this.game.canvas.width * 0.16, 155); }
   wallHeight() { return Math.min(this.game.canvas.height * 0.34, 260); }
 
-  // breath phase in [-1, 1]; positive = inhale (ring growing)
-  breathK() {
-    return Math.sin((this.cycleT / this.def.params.cycleSec) * Math.PI * 2);
-  }
+  // kept for tests/tools: the breath phase if this level breathes
+  breathK() { return this.mech.breathK ? this.mech.breathK() : 0; }
 
   update(dt) {
     this.t += dt;
@@ -83,14 +79,16 @@ export class LevelScene {
     if (Input.pressed('back'))    { this.game.goto('menu'); return; }
 
     if (this.state === 'intro') {
-      if (this.t > 2.2 || Input.pressed('confirm')) { this.state = 'play'; this.t = 0; }
+      if (this.t > 2.4 || Input.pressed('confirm')) { this.state = 'play'; this.t = 0; }
       return;
     }
 
-    // ---- movement (always available once playing) ----
+    // ---- movement ----
     const { R, U } = Input.dirs();
     const k = 1 / Math.SQRT2;
-    const mx = (R - U) * k, mz = (-R - U) * k;
+    let mx = (R - U) * k, mz = (-R - U) * k;
+    const mLen = Math.hypot(mx, mz);
+    if (mLen > 1) { mx /= mLen; mz /= mLen; }
     const s = this.stick;
     s.moving = mx !== 0 || mz !== 0;
     if (s.moving) {
@@ -101,9 +99,20 @@ export class LevelScene {
     this.room.clamp(s);
     s.y = this.floorY - Stick.hipHeight(s.moving ? 0.12 : 0.06, s.scale);
 
-    if (this.state === 'play') this.updateBreath(dt);
+    if (this.state === 'play') {
+      this.mech.update(dt);
+      if (this.mech.complete) {
+        this.state = 'complete';
+        this.t = 0;
+        this.exit = { x: 0, z: -this.room.floorHalf + 44 };
+      }
+    }
 
-    if (this.state === 'complete' && this.exit) {
+    if (this.state === 'complete') {
+      this.mech.update(dt); // fireflies etc. keep living
+      if (this.mech.darkness === 'lifting') {
+        this.darkFade = Math.max(0, this.darkFade - dt / 1.5);
+      }
       const d = Math.hypot(s.x - this.exit.x, s.z - this.exit.z);
       if (d < 26) {
         Sfx.good();
@@ -113,61 +122,6 @@ export class LevelScene {
 
     this.room.update(dt);
     this.dust.update(dt);
-  }
-
-  updateBreath(dt) {
-    const p = this.def.params;
-    this.cycleT += dt;
-    const bk = this.breathK();
-    const holding = Input.down('breath');
-    if (holding) this.engaged = true;
-
-    const want = bk > 0;
-    if (this.engaged) this.align += (holding === want ? dt : -dt * 1.5);
-    Music.setBreath(this.engaged ? bk : 0);
-
-    if (this.cycleT >= p.cycleSec) {
-      this.cycleT -= p.cycleSec;
-      if (this.engaged) {
-        const quality = this.align / p.cycleSec;
-        if (quality >= 0.5) this.goodCycle();
-        else Sfx.miss();
-      }
-      this.align = 0;
-      this.engaged = false;
-    }
-  }
-
-  goodCycle() {
-    const p = this.def.params;
-    this.cycles++;
-    Sfx.good();
-    const progress = this.cycles / this.needed;
-
-    if (p.effect === 'shake' || p.effect === 'both') {
-      this.tremorLevel = (p.tremor || 0.8) * (1 - progress);
-    }
-    if (p.effect === 'walls' || p.effect === 'both') {
-      // each breath pushes the walls back open — the prologue in reverse
-      const target = this.startHalf + (this.room.floorHalf - this.startHalf) * progress;
-      this.room.setTarget(target);
-      Sfx.slam();
-      const hg = target, fy = this.floorY;
-      this.dust.burst( hg, fy, 0, 4, 60);
-      this.dust.burst(-hg, fy, 0, 4, 60);
-      this.dust.burst(0, fy,  hg, 4, 60);
-      this.dust.burst(0, fy, -hg, 4, 60);
-    }
-    Music.setMood({ tension: this.def.mood.tension * (1 - progress) });
-    this.hintUntilFirstGood = false;
-
-    if (this.cycles >= this.needed) {
-      this.state = 'complete';
-      this.t = 0;
-      this.tremorLevel = 0;
-      Music.setBreath(0);
-      this.exit = { x: 0, z: -this.room.floorHalf + 44 };
-    }
   }
 
   // ---- draw -----------------------------------------------------------
@@ -187,31 +141,48 @@ export class LevelScene {
     const s = this.stick;
 
     this.room.drawBack(ctx, pr);
-    if (this.exit) this.drawExit(ctx, pr);
     contactShadow(ctx, pr, s.x, s.z, this.floorY, 1);
-    if (this.state === 'play') this.drawBreathRing(ctx, pr);
+    if (this.state !== 'intro' && this.mech.drawWorld) this.mech.drawWorld(ctx, pr);
     this.drawStick(ctx, pr);
     this.dust.draw(ctx, pr);
     this.room.drawFront(ctx, pr);
+
+    // darkness, and the lights that live above it
+    if (this.mech.darkness && this.darkFade > 0.01) this.applyDarkness(ctx, pr);
+    if (this.mech.drawLights && this.state !== 'intro') this.mech.drawLights(ctx, pr);
+    if (this.exit) this.drawExit(ctx, pr);
     ctx.restore();
 
     this.drawUI(ctx, w, h);
   }
 
-  drawBreathRing(ctx, pr) {
-    const bk = this.breathK();
+  // Black veil over the world with a soft pool of light around the
+  // figure (screen-space radial hole, punched via destination-out).
+  applyDarkness(ctx, pr) {
+    const w = this.game.canvas.width, h = this.game.canvas.height;
+    if (!this._dark || this._dark.width !== w || this._dark.height !== h) {
+      this._dark = document.createElement('canvas');
+      this._dark.width = w;
+      this._dark.height = h;
+    }
+    const d = this._dark.getContext('2d');
+    d.globalCompositeOperation = 'source-over';
+    d.clearRect(0, 0, w, h);
+    d.fillStyle = `rgba(0,0,0,${0.93 * this.darkFade})`;
+    d.fillRect(0, 0, w, h);
+
     const s = this.stick;
-    const holding = Input.down('breath');
-    const matching = holding === (bk > 0);
-    const r = 40 + bk * 18;
-    const c = pr({ x: s.x, y: this.floorY, z: s.z });
-    ctx.beginPath();
-    ctx.ellipse(c.x, c.y, r, r * 0.5, 0, 0, Math.PI * 2);
-    ctx.strokeStyle = this.engaged && matching
-      ? 'rgba(255,255,255,0.85)'
-      : 'rgba(255,255,255,0.3)';
-    ctx.lineWidth = this.engaged && matching ? 2.5 : 1.5;
-    ctx.stroke();
+    const c = pr({ x: s.x, y: s.y - 20, z: s.z });
+    const r = this.mech.glow || 140;
+    const grad = d.createRadialGradient(c.x, c.y, 0, c.x, c.y, r);
+    grad.addColorStop(0, 'rgba(0,0,0,1)');
+    grad.addColorStop(0.55, 'rgba(0,0,0,0.85)');
+    grad.addColorStop(1, 'rgba(0,0,0,0)');
+    d.globalCompositeOperation = 'destination-out';
+    d.fillStyle = grad;
+    d.fillRect(c.x - r, c.y - r, r * 2, r * 2);
+
+    ctx.drawImage(this._dark, 0, 0);
   }
 
   drawExit(ctx, pr) {
@@ -243,15 +214,9 @@ export class LevelScene {
 
   drawStick(ctx, pr) {
     const s = this.stick;
-    let pose;
-    const holding = Input.down('breath');
-    if (this.state !== 'intro' && holding) {
-      pose = Stick.poseBreathe(Math.max(0, this.breathK()));
-    } else if (s.moving) {
-      pose = Stick.poseRun(this.elapsed);
-    } else {
-      pose = Stick.poseIdle(this.elapsed);
-    }
+    let pose = null;
+    if (this.state !== 'intro' && this.mech.figurePose) pose = this.mech.figurePose();
+    if (!pose) pose = s.moving ? Stick.poseRun(this.elapsed) : Stick.poseIdle(this.elapsed);
     pose.x = s.x; pose.y = s.y; pose.z = s.z;
     pose.yaw = s.yaw; pose.scale = s.scale;
     Stick.draw(ctx, pr, pose, Palette.get('figure'), 3);
@@ -262,14 +227,18 @@ export class LevelScene {
       const a = Math.min(this.t / 0.6, 1);
       text(ctx, this.chapterTitle, w / 2, h * 0.18, 15, Palette.get('textFaint'), a, true);
       text(ctx, `${this.numeral}. ${this.def.title}`, w / 2, h * 0.18 + 34, 26, Palette.get('text'), a, true);
+      if (this.def.intro) {
+        text(ctx, this.def.intro, w / 2, h * 0.18 + 66, 14, Palette.get('textFaint'), a);
+      }
       return;
     }
 
-    // cycle progress dots
-    for (let i = 0; i < this.needed; i++) {
+    // progress dots
+    const { done, total } = this.mech.progress();
+    for (let i = 0; i < total; i++) {
       ctx.beginPath();
-      ctx.arc(w / 2 + (i - (this.needed - 1) / 2) * 18, 30, 4, 0, Math.PI * 2);
-      if (i < this.cycles) {
+      ctx.arc(w / 2 + (i - (total - 1) / 2) * 18, 30, 4, 0, Math.PI * 2);
+      if (i < done) {
         ctx.fillStyle = 'rgba(255,255,255,0.8)';
         ctx.fill();
       } else {
@@ -279,12 +248,10 @@ export class LevelScene {
       }
     }
 
-    if (this.state === 'play' && this.hintUntilFirstGood && this.def.hint) {
-      text(ctx, this.def.hint, w / 2, h * 0.88, 14, Palette.get('textFaint'));
-    }
+    if (this.state === 'play' && this.mech.drawUI) this.mech.drawUI(ctx, w, h);
     if (this.state === 'complete') {
       const a = Math.min(this.t / 0.8, 1);
-      text(ctx, 'still.', w / 2, h * 0.16, 20, Palette.get('text'), a);
+      text(ctx, this.def.mechanic === 'seek' ? 'lighter.' : 'still.', w / 2, h * 0.16, 20, Palette.get('text'), a);
       text(ctx, 'walk to the light', w / 2, h * 0.88, 13, Palette.get('textFaint'), a);
     }
   }

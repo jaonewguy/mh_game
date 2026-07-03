@@ -159,6 +159,7 @@ export class PrologueScene {
     const s = this.stick;
     s.moving = mx !== 0 || mz !== 0;
     if (s.moving) {
+      this.hasMoved = true;
       s.yaw = Math.atan2(mz, mx);
       s.x += mx * 240 * dt;
       s.z += mz * 240 * dt;
@@ -189,6 +190,11 @@ export class PrologueScene {
     ctx.restore();
 
     this.drawTitle(ctx, w, h);
+    // a nudge for players who don't realize they can move
+    if (!this.hasMoved && (this.phase === 'settle' || this.phase === 'walls') && this.elapsed > 4.5) {
+      const a = 0.2 + Math.abs(Math.sin(this.elapsed * 2)) * 0.25;
+      text(ctx, 'arrows — move', w / 2, h * 0.88, 13, `rgba(255,255,255,${a})`);
+    }
     this.drawEnd(ctx, w, h);
   }
 

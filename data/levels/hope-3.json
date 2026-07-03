@@ -1,0 +1,9 @@
+{
+  "id": "hope-3",
+  "title": "the long night",
+  "mechanic": "seek",
+  "mood": { "tension": 0.85 },
+  "room": { "startScale": 1.0 },
+  "params": { "motes": 5, "glow": 140, "glowPerMote": 50, "decay": 7, "minGlow": 70 },
+  "intro": "the dark leans back in. keep finding."
+}

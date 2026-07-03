@@ -2,8 +2,9 @@
   "id": "calm-1",
   "title": "tremor",
   "mechanic": "breath",
+  "tutorial": true,
   "mood": { "tension": 0.55 },
   "room": { "startScale": 1.0 },
-  "params": { "cycleSec": 7, "cyclesNeeded": 3, "effect": "shake", "tremor": 0.9 },
-  "hint": "breathe with the ring — hold space as it grows, let go as it shrinks"
+  "params": { "cycleSec": 5, "cyclesNeeded": 3, "effect": "shake", "tremor": 0.9 },
+  "intro": "the room is shaking. breathe, and it will listen."
 }

@@ -1,0 +1,9 @@
+{
+  "id": "hope-1",
+  "title": "the dark",
+  "mechanic": "seek",
+  "mood": { "tension": 0.6 },
+  "room": { "startScale": 1.0 },
+  "params": { "motes": 3, "glow": 150, "glowPerMote": 45 },
+  "intro": "the lights went out. not all of them."
+}

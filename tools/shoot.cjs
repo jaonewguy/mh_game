@@ -7,8 +7,8 @@
  * Screenshots land in OUT (default: tools/out). Exits non-zero on any
  * console/page error or a failed step.
  *
- * Usage:  node tools/shoot.js            (server on :8010 already running)
- *         PORT=9000 OUT=/tmp/shots node tools/shoot.js
+ * Usage:  node tools/shoot.cjs            (server on :8010 already running)
+ *         PORT=9000 OUT=/tmp/shots node tools/shoot.cjs
  */
 const { chromium } = require('playwright');
 const fs = require('fs');
@@ -67,7 +67,7 @@ const OUT = process.env.OUT || `${__dirname}/out`;
   // Play the breathing mechanic for real: hold space on the inhale,
   // release on the exhale, until the level reports completion.
   let spaceDown = false;
-  const deadline = Date.now() + 60000;
+  const deadline = Date.now() + 110000; // calm-1 now includes the tutorial walkthrough
   while (Date.now() < deadline) {
     const st = await page.evaluate(() => {
       const sc = window.__game.scene;
@@ -98,6 +98,13 @@ const OUT = process.env.OUT || `${__dirname}/out`;
   await page.keyboard.up('ArrowRight');
 
   // ---- jump to the unlock ceremony (calm-2/3 share the code path) ----
+  // let the level-advance transition finish first: goto() during an
+  // in-flight fade is ignored
+  await page.waitForFunction(
+    () => window.__game.sceneName === 'level' && window.__game.scene.node.index === 1,
+    null, { timeout: 10000 }
+  ).catch(() => errors.push('never advanced to calm-2 after the exit'));
+  await page.waitForTimeout(900);
   await page.evaluate(() => window.__flow.enter(window.__game, { type: 'unlock', chapter: 'calm' }));
   await sceneIs('unlock');
   await page.waitForTimeout(4500);
@@ -107,16 +114,29 @@ const OUT = process.env.OUT || `${__dirname}/out`;
   const calmUnlocked = await page.evaluate(() => window.__palette.isUnlocked('calm'));
   if (!calmUnlocked) errors.push('calm color not unlocked after ceremony');
 
+  // ---- the calm unlock flows into hope's story; peek at the dark level ----
+  await sceneIs('story', 40000);
+  await page.waitForTimeout(900);
+  await page.evaluate(() => window.__flow.enter(window.__game, { type: 'level', chapter: 'hope', index: 0 }));
+  await page.waitForFunction(
+    () => window.__game.sceneName === 'level' && window.__game.scene.state !== 'intro',
+    null, { timeout: 15000 }
+  );
+  await page.waitForTimeout(1500);
+  await shot('09_hope_dark');
+
   // ---- end scene ----
+  await page.waitForTimeout(500);
+  await page.evaluate(() => window.__flow.enter(window.__game, { type: 'end' }));
   await sceneIs('end', 20000);
   await page.waitForTimeout(1800);
-  await shot('09_end');
+  await shot('10_end');
 
   // ---- reload: continue should resume from the saved node ----
   await page.reload();
   await sceneIs('menu');
   await page.waitForTimeout(600);
-  await shot('10_menu_continue');
+  await shot('11_menu_continue');
   const stillUnlocked = await page.evaluate(() => window.__palette.isUnlocked('calm'));
   if (!stillUnlocked) errors.push('calm unlock did not persist across reload');
 

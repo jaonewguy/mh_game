@@ -13,15 +13,29 @@ clarity.
 
 - **Prologue — The Fall**: a stickman falls through black space into a
   glass cube; every second the walls slam inward. The world closes in.
-- **Chapter One — Calm**: the breathing mechanic. A ring pulses around
-  the figure with the music's swell; breathe with it (hold SPACE as it
-  grows, release as it shrinks) to steady a trembling room, push
-  closed-in walls back open, and finally reclaim the first color.
+- **Chapter One — Calm**: the breathing mechanic, now opening with a
+  guided tutorial — the figure demonstrates a breath, then the ring
+  literally waits for you to hold and to let go before the real cycles
+  begin. Breathe with the ring (hold SPACE as it grows, release as it
+  shrinks) to steady a trembling room, push closed-in walls back open,
+  and reclaim the first color.
+- **Chapter Two — Hope**: the dark. The world is only visible inside a
+  pool of light around the figure; small lights flicker out in the
+  black. Each one you reach joins you as a firefly and lets you see
+  farther — until the way out appears.
 - Adaptive procedural score: an ambient bed that darkens with tension,
-  a heartbeat pulse, and one generative voice per unlocked color.
+  swells with your breathing, a heartbeat pulse, and one generative
+  voice per unlocked color.
 - Progress (colors + position) persists; continue from the menu.
 
-## Running the game
+## Playing online (GitHub Pages)
+
+One-time repo setup: **Settings → Pages → Source: "GitHub Actions"**.
+After that, the included workflow (`.github/workflows/pages.yml`)
+publishes this branch on every push at
+`https://<user>.github.io/mh_game/`.
+
+## Running locally
 
 No build step, no dependencies — but ES modules need a server:
 
@@ -72,14 +86,24 @@ Design rules that keep the project portable and vibe-codeable:
 ## Testing
 
 ```sh
+npm run test:unit   # pure logic: flow, save, palette (plain node)
+npm run test:e2e    # real playthroughs in headless Chromium (needs playwright)
+npm test            # both
+```
+
+The e2e tests genuinely play the game — they breathe through the
+tutorial, walk to the lights in the dark, and check that unlocked
+colors survive a reload. Visual review shots:
+
+```sh
 python3 -m http.server 8010 &
-node tools/shoot.js   # plays the game end-to-end, screenshots to tools/out
+node tools/shoot.cjs   # full playthrough, screenshots to tools/out
 ```
 
 ## Roadmap
 
-- Chapters 2–6 (hope, joy, courage, warmth, clarity) — gated on the
-  Chapter 1 playtest
+- Chapters 3–6 (joy, courage, warmth, clarity) — gated on the Chapter 2
+  playtest
 - Color bleed-in across previously visited spaces
 - Composed music stems layered over the procedural bed
 - Touch controls + itch.io packaging
