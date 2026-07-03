@@ -10,7 +10,8 @@ test('unlock ceremony: color + music voice arrive, and both survive a reload', a
     await enterNode(page, { type: 'unlock', chapter: 'hope' });
     await sceneIs(page, 'unlock');
 
-    await page.waitForFunction(() => window.__palette.isUnlocked('hope'), null, { timeout: 10000 });
+    // generous timeout: game time stretches under CI load (dt clamp)
+    await page.waitForFunction(() => window.__palette.isUnlocked('hope'), null, { timeout: 25000 });
 
     const music = await page.evaluate(() => window.__music.debugState());
     if (music.started) {

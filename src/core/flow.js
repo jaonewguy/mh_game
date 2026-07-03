@@ -54,6 +54,12 @@ export const Flow = {
         .find(ch => !Palette.isUnlocked(ch.emotion));
       if (pending) node = { type: 'story', id: pending.story };
     }
+    this.enterRaw(game, node);
+  },
+
+  // Enter exactly this node, no rerouting — used by the dev scene
+  // picker so every node (including the end card) is reachable.
+  enterRaw(game, node) {
     Save.setNode(node);
     switch (node.type) {
       case 'prologue': game.goto('prologue'); break;
