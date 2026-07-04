@@ -31,7 +31,19 @@ const ROLES = {
   wind:      { locked: 'rgba(255,255,255,0.28)', emotion: null },
   text:      { locked: 'rgba(255,255,255,0.85)', emotion: null },
   textFaint: { locked: 'rgba(255,255,255,0.4)',  emotion: null },
+  // domains that take on their emotion's color once it's reclaimed
+  breathRing: { locked: '#FFFFFF', emotion: 'calm' },
+  hopeLight:  { locked: '#FFFFFF', emotion: 'hope' },
+  joyTrail:   { locked: '#FFFFFF', emotion: 'joy' },
 };
+
+function hexToRgb(hex) {
+  return {
+    r: parseInt(hex.slice(1, 3), 16),
+    g: parseInt(hex.slice(3, 5), 16),
+    b: parseInt(hex.slice(5, 7), 16),
+  };
+}
 
 let unlocked = new Set();
 try {
@@ -84,5 +96,20 @@ export const Palette = {
     if (!r) return '#FFFFFF';
     if (r.emotion && unlocked.has(r.emotion)) return this.colorOf(r.emotion);
     return r.locked;
+  },
+
+  // Role color as rgba with a chosen alpha (roles whose locked value
+  // is a hex color — the emotion-domain roles above).
+  roleRGBA(role, alpha) {
+    const c = this.get(role);
+    if (!c.startsWith('#')) return c;
+    const { r, g, b } = hexToRgb(c);
+    return `rgba(${r},${g},${b},${alpha})`;
+  },
+
+  // A named emotion's color as rgba (for washes and blooms).
+  colorRGBA(name, alpha) {
+    const { r, g, b } = hexToRgb(this.colorOf(name));
+    return `rgba(${r},${g},${b},${alpha})`;
   },
 };

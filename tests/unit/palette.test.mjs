@@ -50,3 +50,21 @@ test('palette: corrupted storage starts colorless instead of crashing', async ()
   const { Palette } = await import('../../src/palette.js?case=corrupt');
   assert.equal(Palette.unlockedCount(), 0);
 });
+
+test('palette: emotion-domain roles turn their color when unlocked', async () => {
+  shim();
+  const { Palette } = await import('../../src/palette.js?case=roles');
+
+  // locked: monochrome
+  assert.equal(Palette.roleRGBA('breathRing', 0.5), 'rgba(255,255,255,0.5)');
+  assert.equal(Palette.roleRGBA('hopeLight', 1), 'rgba(255,255,255,1)');
+
+  // unlocked: the domain takes the emotion's color (calm = #7FE0B2)
+  Palette.unlock('calm');
+  assert.equal(Palette.roleRGBA('breathRing', 0.5), 'rgba(127,224,178,0.5)');
+  // other domains stay monochrome until their emotion returns
+  assert.equal(Palette.roleRGBA('joyTrail', 1), 'rgba(255,255,255,1)');
+
+  // wash helper follows slot colors directly
+  assert.equal(Palette.colorRGBA('hope', 0.12), 'rgba(94,200,255,0.12)');
+});

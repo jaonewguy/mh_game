@@ -53,6 +53,36 @@ export function floorSlab(ctx, pr, half, fy, color) {
   ctx.fill();
 }
 
+// Color washing back into the world: every unlocked emotion drifts a
+// soft tinted bloom across the floor, clipped to the slab — ink in
+// water, spreading from wherever the figure is.
+export function floorWash(ctx, pr, half, fy, t, focus) {
+  const unlocked = Palette.slots.filter(s => Palette.isUnlocked(s.name));
+  if (!unlocked.length) return;
+
+  quadPath(ctx, pr, [
+    { x: -half, y: fy, z: -half }, { x: half, y: fy, z: -half },
+    { x:  half, y: fy, z:  half }, { x: -half, y: fy, z: half },
+  ]);
+  ctx.save();
+  ctx.clip();
+
+  const fx = focus ? focus.x : 0, fz = focus ? focus.z : 0;
+  unlocked.forEach((slot, i) => {
+    const a = t * 0.12 + i * 2.3;
+    const cx = fx + Math.cos(a) * half * 0.45;
+    const cz = fz + Math.sin(a * 0.77 + i) * half * 0.45;
+    const p = pr({ x: cx, y: fy, z: cz });
+    const r = half * 1.1;
+    const grad = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, r);
+    grad.addColorStop(0, Palette.colorRGBA(slot.name, 0.12));
+    grad.addColorStop(1, Palette.colorRGBA(slot.name, 0));
+    ctx.fillStyle = grad;
+    ctx.fillRect(p.x - r, p.y - r, r * 2, r * 2);
+  });
+  ctx.restore();
+}
+
 // Contact shadow on the floor plane; nearness in (0,1], 1 = touching.
 export function contactShadow(ctx, pr, x, z, floorY, nearness) {
   const p = pr({ x, y: floorY, z });

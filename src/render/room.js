@@ -11,7 +11,7 @@
  * drawFront (near walls) so the figure renders in between and shows
  * through the near glass.
  */
-import { floorSlab, glassWall } from './draw.js';
+import { floorSlab, glassWall, floorWash } from './draw.js';
 
 export class Room {
   constructor({ floorHalf, wallH, floorY }) {
@@ -63,8 +63,12 @@ export class Room {
     ];
   }
 
-  drawBack(ctx, pr, floorColor) {
-    floorSlab(ctx, pr, this.floorHalf, this.floorY, floorColor);
+  // opts.wash: { t, focus } — reclaimed colors drift across the floor
+  drawBack(ctx, pr, opts = {}) {
+    floorSlab(ctx, pr, this.floorHalf, this.floorY, opts.floorColor);
+    if (opts.wash) {
+      floorWash(ctx, pr, this.floorHalf, this.floorY, opts.wash.t, opts.wash.focus);
+    }
     for (const w of this._walls()) {
       if (w.d < 0) glassWall(ctx, pr, w.a, w.b, this.floorY - this.wallH);
     }

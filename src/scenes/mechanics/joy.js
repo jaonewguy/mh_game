@@ -111,6 +111,21 @@ export class JoyMechanic {
     const d = Math.hypot(dx, dz);
     const speed = 250 * (this.p.sparkSpeed || 1);
 
+    // calm changes the rules: breathe (once calm is reclaimed) and the
+    // spark grows curious about your stillness — it comes to you.
+    this.calmed = !!(this.scene.abilities && this.scene.abilities.breathing && !s.moving);
+    if (this.calmed) {
+      sp.vx += ((s.x - sp.x) / Math.max(1, d)) * 260 * dt;
+      sp.vz += ((s.z - sp.z) / Math.max(1, d)) * 260 * dt;
+      const v = Math.hypot(sp.vx, sp.vz);
+      const curious = 95;
+      if (v > curious) { sp.vx = (sp.vx / v) * curious; sp.vz = (sp.vz / v) * curious; }
+      sp.x += sp.vx * dt;
+      sp.z += sp.vz * dt;
+      if (d < 30) this.catchSpark();
+      return;
+    }
+
     if (d < 150) {
       // flee, but playfully — never in a dead-straight line
       const away = Math.atan2(-dz, -dx) + Math.sin(this.t * 3) * 0.7;
@@ -139,16 +154,19 @@ export class JoyMechanic {
     if (Math.abs(sp.x) > lim) { sp.x = Math.sign(sp.x) * lim; sp.vx *= -0.6; }
     if (Math.abs(sp.z) > lim) { sp.z = Math.sign(sp.z) * lim; sp.vz *= -0.6; }
 
-    if (d < 30) {
-      this.catches++;
-      Sfx.spark();
-      this.scene.dust.burst(sp.x, this.scene.floorY, sp.z, 10, 120);
-      Music.setMood({
-        tension: this.scene.def.mood.tension * (1 - this.catches / this.p.catches),
-      });
-      if (this.catches >= this.p.catches) this.finish();
-      else this.spark = this.spawnSpark();
-    }
+    if (d < 30) this.catchSpark();
+  }
+
+  catchSpark() {
+    const sp = this.spark;
+    this.catches++;
+    Sfx.spark();
+    this.scene.dust.burst(sp.x, this.scene.floorY, sp.z, 10, 120);
+    Music.setMood({
+      tension: this.scene.def.mood.tension * (1 - this.catches / this.p.catches),
+    });
+    if (this.catches >= this.p.catches) this.finish();
+    else this.spark = this.spawnSpark();
   }
 
   finish() {
@@ -165,7 +183,7 @@ export class JoyMechanic {
     if (this.strokes && this.strokes.length > 1) {
       ctx.lineCap = 'round';
       ctx.lineJoin = 'round';
-      for (const [color, lw] of [['rgba(0,0,0,0.12)', 15], ['rgba(255,255,255,0.30)', 8]]) {
+      for (const [color, lw] of [['rgba(0,0,0,0.12)', 15], [Palette.roleRGBA('joyTrail', 0.30), 8]]) {
         ctx.beginPath();
         let pen = false;
         for (let i = 0; i < this.strokes.length; i++) {
@@ -198,7 +216,7 @@ export class JoyMechanic {
         ctx.beginPath();
         ctx.moveTo(pa.x, pa.y);
         ctx.lineTo(pb.x, pb.y);
-        ctx.strokeStyle = `rgba(255,255,255,${0.55 * alpha})`;
+        ctx.strokeStyle = Palette.roleRGBA('joyTrail', 0.55 * alpha);
         ctx.lineWidth = 2;
         ctx.stroke();
       }
@@ -216,8 +234,8 @@ export class JoyMechanic {
       // the spark itself, hovering and shimmering
       const p = pr({ x: sp.x, y: this.scene.floorY - 22 + Math.sin(this.t * 6) * 4, z: sp.z });
       const grad = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, 16);
-      grad.addColorStop(0, 'rgba(255,255,255,0.9)');
-      grad.addColorStop(1, 'rgba(255,255,255,0)');
+      grad.addColorStop(0, Palette.roleRGBA('joyTrail', 0.9));
+      grad.addColorStop(1, Palette.roleRGBA('joyTrail', 0));
       ctx.fillStyle = grad;
       ctx.fillRect(p.x - 16, p.y - 16, 32, 32);
       ctx.beginPath();

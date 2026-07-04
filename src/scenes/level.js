@@ -26,6 +26,7 @@ import { Music } from '../audio/music.js';
 import { BreathMechanic } from './mechanics/breath.js';
 import { SeekMechanic } from './mechanics/seek.js';
 import { JoyMechanic } from './mechanics/joy.js';
+import { Abilities } from './abilities.js';
 
 const MECHANICS = { breath: BreathMechanic, seek: SeekMechanic, joy: JoyMechanic };
 
@@ -66,6 +67,7 @@ export class LevelScene {
     Music.setMood({ tension: this.def.mood.tension });
 
     this.mech = new MECHANICS[this.def.mechanic](this, this.def);
+    this.abilities = new Abilities(this);
   }
 
   // Rooms grow as the game goes on — `room.scale` in the level JSON
@@ -125,6 +127,8 @@ export class LevelScene {
     this.room.clamp(s);
     s.y = this.floorY - Stick.hipHeight(s.moving ? 0.12 : 0.06, s.scale);
 
+    this.abilities.update(dt);
+
     if (this.state === 'play') {
       this.mech.update(dt);
       if (this.mech.complete) {
@@ -177,10 +181,12 @@ export class LevelScene {
     const pr = (p) => project(p, cam);
     const s = this.stick;
 
-    this.room.drawBack(ctx, pr);
+    this.room.drawBack(ctx, pr, { wash: { t: this.elapsed, focus: s } });
     contactShadow(ctx, pr, s.x, s.z, this.floorY, 1);
     if (this.state !== 'intro' && this.mech.drawWorld) this.mech.drawWorld(ctx, pr);
+    this.abilities.drawUnder(ctx, pr);
     this.drawStick(ctx, pr);
+    this.abilities.drawOver(ctx, pr);
     this.dust.draw(ctx, pr);
     this.room.drawFront(ctx, pr);
 
@@ -251,8 +257,8 @@ export class LevelScene {
 
   drawStick(ctx, pr) {
     const s = this.stick;
-    let pose = null;
-    if (this.state !== 'intro' && this.mech.figurePose) pose = this.mech.figurePose();
+    let pose = this.abilities.figurePose();
+    if (!pose && this.state !== 'intro' && this.mech.figurePose) pose = this.mech.figurePose();
     if (!pose) pose = s.moving ? Stick.poseRun(this.elapsed) : Stick.poseIdle(this.elapsed);
     pose.x = s.x; pose.y = s.y; pose.z = s.z;
     pose.yaw = s.yaw; pose.scale = s.scale;

@@ -198,21 +198,22 @@ export class BreathMechanic {
     const pulse = waiting ? 0.25 + Math.abs(Math.sin(this.stateT * 4)) * 0.5 : 0;
 
     // soft fill makes the ring read as a breathing body of air
+    // (white while calm is still locked; calm's green ever after)
     ctx.beginPath();
     ctx.ellipse(c.x, c.y, r, r * 0.5, 0, 0, Math.PI * 2);
-    ctx.fillStyle = `rgba(255,255,255,${0.05 + (matching ? 0.08 : 0) + pulse * 0.06})`;
+    ctx.fillStyle = Palette.roleRGBA('breathRing', 0.05 + (matching ? 0.08 : 0) + pulse * 0.06);
     ctx.fill();
     ctx.strokeStyle = 'rgba(0,0,0,0.45)';
     ctx.lineWidth = 5;
     ctx.stroke();
-    ctx.strokeStyle = `rgba(255,255,255,${matching ? 0.9 : 0.4 + pulse * 0.5})`;
+    ctx.strokeStyle = Palette.roleRGBA('breathRing', matching ? 0.9 : 0.4 + pulse * 0.5);
     ctx.lineWidth = matching ? 3 : 2;
     ctx.stroke();
     // an outer echo while matching — breathing "resonates"
     if (matching && this.state !== 'watch') {
       ctx.beginPath();
       ctx.ellipse(c.x, c.y, r + 10, (r + 10) * 0.5, 0, 0, Math.PI * 2);
-      ctx.strokeStyle = 'rgba(255,255,255,0.18)';
+      ctx.strokeStyle = Palette.roleRGBA('breathRing', 0.18);
       ctx.lineWidth = 6;
       ctx.stroke();
     }

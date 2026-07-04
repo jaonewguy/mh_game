@@ -31,7 +31,20 @@ const TORSO = 0.34, ARM = 0.17, LEG = 0.24, HEAD_R = 0.115;
  */
 export function draw(ctx, project, pose, color, lineWidth) {
   const s = (pose.scale || 1) * H * (1 + (pose.breathe || 0) * 0.04);
-  const yaw = pose.yaw || 0;
+  let yaw = pose.yaw || 0;
+
+  // Keep the limb plane from turning edge-on to the camera: facing
+  // screen-up/down would project the whole skeleton onto one vertical
+  // line. Nudge the drawing yaw away from the degenerate angles.
+  const MIN = 0.45; // radians of clearance from edge-on
+  const th = Math.atan2(Math.sin(yaw + Math.PI / 4), Math.cos(yaw + Math.PI / 4));
+  for (const edge of [Math.PI / 2, -Math.PI / 2]) {
+    const d = th - edge;
+    if (Math.abs(d) < MIN) {
+      yaw = edge + (d >= 0 ? MIN : -MIN) - Math.PI / 4;
+      break;
+    }
+  }
   const f = { x: Math.cos(yaw), z: Math.sin(yaw) }; // facing on ground plane
 
   const seg = (from, angle, len) => ({

@@ -107,20 +107,20 @@ export class SeekMechanic {
       const rr = 16 + Math.sin(this.t * 2 + m.seed) * 2;
       ctx.beginPath();
       ctx.ellipse(g.x, g.y, rr, rr * 0.5, 0, 0, Math.PI * 2);
-      ctx.strokeStyle = `rgba(255,255,255,${0.25 + flicker * 0.3})`;
+      ctx.strokeStyle = Palette.roleRGBA('hopeLight', 0.25 + flicker * 0.3);
       ctx.lineWidth = 1.5;
       ctx.stroke();
 
       // the light itself hovers just above its spot
       const p = pr({ x: m.x, y: this.scene.floorY - 14, z: m.z });
       const grad = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, 14);
-      grad.addColorStop(0, `rgba(255,255,255,${flicker})`);
-      grad.addColorStop(1, 'rgba(255,255,255,0)');
+      grad.addColorStop(0, Palette.roleRGBA('hopeLight', flicker));
+      grad.addColorStop(1, Palette.roleRGBA('hopeLight', 0));
       ctx.fillStyle = grad;
       ctx.fillRect(p.x - 14, p.y - 14, 28, 28);
       ctx.beginPath();
       ctx.arc(p.x, p.y, 2, 0, Math.PI * 2);
-      ctx.fillStyle = `rgba(255,255,255,${0.6 + flicker * 0.4})`;
+      ctx.fillStyle = Palette.roleRGBA('hopeLight', 0.6 + flicker * 0.4);
       ctx.fill();
     }
 
@@ -134,7 +134,7 @@ export class SeekMechanic {
       });
       ctx.beginPath();
       ctx.arc(p.x, p.y, 1.8, 0, Math.PI * 2);
-      ctx.fillStyle = 'rgba(255,255,255,0.85)';
+      ctx.fillStyle = Palette.roleRGBA('hopeLight', 0.85);
       ctx.fill();
     }
   }

@@ -181,7 +181,7 @@ export class PrologueScene {
     const s = this.stick;
 
     this.specks.draw(ctx, pr, s.vy);
-    this.room.drawBack(ctx, pr);
+    this.room.drawBack(ctx, pr, { wash: { t: this.elapsed, focus: s } });
     const nearness = Math.max(0.12, 1 - Math.max(0, this.fallDist - s.y) / 1100);
     contactShadow(ctx, pr, s.x, s.z, this.fallDist, nearness);
     this.drawStick(ctx, pr);
