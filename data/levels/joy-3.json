@@ -3,7 +3,7 @@
   "title": "flight",
   "mechanic": "joy",
   "mood": { "tension": 0.6 },
-  "room": { "startScale": 1.0 },
+  "room": { "scale": 1.6 },
   "params": { "mode": "chase", "catches": 5, "sparkSpeed": 1.2 },
   "intro": "faster now. it likes you."
 }

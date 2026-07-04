@@ -14,7 +14,7 @@ test('unlock ceremony: color + music voice arrive, and both survive a reload', a
     await page.waitForFunction(() => window.__palette.isUnlocked('hope'), null, { timeout: 25000 });
 
     const music = await page.evaluate(() => window.__music.debugState());
-    if (music.started) {
+    if (music.started && music.ctxState === 'running') {
       assert.ok(music.voices.hope > 0, `hope voice should fade in: ${JSON.stringify(music.voices)}`);
     }
 

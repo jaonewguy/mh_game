@@ -3,7 +3,7 @@
   "title": "the spark",
   "mechanic": "joy",
   "mood": { "tension": 0.5 },
-  "room": { "startScale": 1.0 },
+  "room": { "scale": 1.35 },
   "params": { "mode": "chase", "catches": 3 },
   "intro": "something quick and bright wants to play."
 }

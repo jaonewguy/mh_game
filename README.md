@@ -95,8 +95,11 @@ npm test            # both
 ```
 
 The e2e tests genuinely play the game — they breathe through the
-tutorial, walk to the lights in the dark, and check that unlocked
-colors survive a reload. Visual review shots:
+tutorial, walk to the lights in the dark, paint the joy room, and
+check that unlocked colors survive a reload. They're timing-sensitive
+under heavy CPU load (game time stretches when frames slow down); if
+a file fails in a full run, rerun it solo to confirm. Visual review
+shots:
 
 ```sh
 python3 -m http.server 8010 &

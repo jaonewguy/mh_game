@@ -3,7 +3,7 @@
   "title": "momentum",
   "mechanic": "joy",
   "mood": { "tension": 0.45 },
-  "room": { "startScale": 1.0 },
-  "params": { "mode": "move", "seconds": 8 },
-  "intro": "your legs remember something your head forgot."
+  "room": { "scale": 1.7 },
+  "params": { "mode": "paint", "coverage": 0.62 },
+  "intro": "the room is bigger than it was. leave your mark on it."
 }

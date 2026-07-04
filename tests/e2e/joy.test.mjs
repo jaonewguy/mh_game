@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { boot, sceneIs, enterNode, waitForPlay, walkTo } from './helpers.mjs';
 
-test('joy-1: continuous movement fills the meter and completes the level', async () => {
+test('joy-1: running paints the big room until coverage completes the level', async () => {
   const { page, errors, close } = await boot();
   try {
     await page.keyboard.press('Enter');
@@ -10,26 +10,41 @@ test('joy-1: continuous movement fills the meter and completes the level', async
     await enterNode(page, { type: 'level', chapter: 'joy', index: 0 });
     await waitForPlay(page);
 
-    // run laps: alternate direction keys so the figure keeps moving
-    const keys = ['ArrowRight', 'ArrowDown', 'ArrowLeft', 'ArrowUp'];
-    const deadline = Date.now() + 30000;
-    let i = 0;
-    while (Date.now() < deadline) {
+    // the room outgrows the base size and the camera follows
+    const geom = await page.evaluate(() => ({
+      half: window.__game.scene.room.floorHalf,
+      base: Math.min(window.innerWidth * 0.16, 155),
+    }));
+    assert.ok(geom.half > geom.base * 1.5, `room should be bigger: ${geom.half} vs base ${geom.base}`);
+
+    // run a dense serpentine over the floor until enough is painted
+    // (single-cell brush: rows must be about one cell apart)
+    const H = geom.half * 0.85;
+    const lattice = [];
+    for (let row = 0, z = -H; z <= H + 1; z += H / 5.5, row++) {
+      const xs = [-H, H];
+      for (const x of (row % 2 ? xs.slice().reverse() : xs)) lattice.push({ x, z });
+    }
+    const deadline = Date.now() + 150000;
+    for (const target of lattice) {
+      if (Date.now() > deadline) break;
       const done = await page.evaluate(() => window.__game.scene.mech.complete);
       if (done) break;
-      const key = keys[i % 4];
-      await page.keyboard.down(key);
-      await page.waitForTimeout(650);
-      await page.keyboard.up(key);
-      i++;
+      await page.evaluate((t) => { window.__walkTarget = t; }, target);
+      await walkTo(page, () => {
+        const sc = window.__game.scene;
+        if (!sc.mech || !window.__walkTarget) return null;
+        return { x: sc.stick.x, z: sc.stick.z, tx: window.__walkTarget.x, tz: window.__walkTarget.z };
+      }, { arrive: 30, timeoutMs: 12000 });
     }
 
     const st = await page.evaluate(() => ({
       complete: window.__game.scene.mech.complete,
-      trail: window.__game.scene.mech.trail.length,
+      coverage: window.__game.scene.mech.coverageFrac(),
+      strokes: window.__game.scene.mech.strokes.length,
     }));
-    assert.equal(st.complete, true, 'meter should fill from continuous movement');
-    assert.ok(st.trail > 0, 'running should leave a trail');
+    assert.equal(st.complete, true, `coverage should complete the level (got ${(st.coverage * 100).toFixed(0)}%)`);
+    assert.ok(st.strokes > 20, 'running should leave permanent strokes');
     assert.deepEqual(errors, []);
   } finally {
     await close();

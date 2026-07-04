@@ -221,6 +221,9 @@ class MusicEngine {
     if (!this.started) return { started: false };
     return {
       started: true,
+      // suspended contexts don't evaluate scheduled ramps, so gain
+      // readings are only meaningful when running
+      ctxState: audioCtx() ? audioCtx().state : 'none',
       tension: this.mood.tension,
       breath: this.breath,
       voices: Object.fromEntries(

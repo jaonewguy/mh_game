@@ -95,3 +95,17 @@ export function text(ctx, str, x, y, size, color, alpha = 1, spacing = false) {
   ctx.fillText(spacing ? [...str].join(' ') : str, x, y);
   ctx.globalAlpha = 1;
 }
+
+// Same, with a dark halo — for captions that can land on the white
+// floor (big rooms scroll it under the UI).
+export function haloText(ctx, str, x, y, size, color, alpha = 1) {
+  ctx.globalAlpha = alpha;
+  ctx.font = `300 ${size}px "Courier New", monospace`;
+  ctx.textAlign = 'center';
+  ctx.lineWidth = 4;
+  ctx.strokeStyle = 'rgba(0,0,0,0.75)';
+  ctx.strokeText(str, x, y);
+  ctx.fillStyle = color;
+  ctx.fillText(str, x, y);
+  ctx.globalAlpha = 1;
+}

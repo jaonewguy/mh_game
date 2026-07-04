@@ -1,19 +1,20 @@
 /*
  * Joy mechanic (Chapter 3).
  *
- * Joy is movement. The figure runs faster here and leaves a fading
- * trail of light. Two modes, set per level:
+ * Joy is movement. The figure runs faster here and leaves a trail of
+ * light. Two modes, set per level:
  *
- *   mode "move"  — keep moving: motion fills the meter, standing
- *                  still drains it. Stillness was the last chapter's
- *                  lesson; this one is the opposite.
+ *   mode "paint" — the room is bigger than it was, and empty. Running
+ *                  leaves permanent strokes of light on the floor;
+ *                  cover enough of it and the level completes. Motion
+ *                  with a mark to show for it.
  *   mode "chase" — a quick bright spark wants to play. It teases,
  *                  flees when you rush it, wanders when you don't.
  *                  Catch it the required number of times.
  *
- * Level params: { mode, seconds?, catches?, sparkSpeed?, drain? }
+ * Level params: { mode, coverage?, catches?, sparkSpeed? }
  */
-import { text } from '../../render/draw.js';
+import { text, haloText } from '../../render/draw.js';
 import { Palette } from '../../palette.js';
 import { Sfx } from '../../audio/sfx.js';
 import { Music } from '../../audio/music.js';
@@ -26,11 +27,19 @@ export class JoyMechanic {
     this.t = 0;
     this.moveSpeed = 285; // the runner reads this — joy is quick
     this.trail = [];
-    this.meter = 0;
     this.catches = 0;
     scene.tremorLevel = 0;
 
     if (this.p.mode === 'chase') this.spark = this.spawnSpark();
+
+    if (this.p.mode === 'paint') {
+      // a coverage grid over the floor; running brushes cells
+      this.cell = 48;
+      this.gridHalf = scene.room.floorHalf;
+      this.gridN = Math.ceil((this.gridHalf * 2) / this.cell);
+      this.visited = new Set();
+      this.strokes = []; // permanent marks, unlike the fading tail
+    }
   }
 
   spawnSpark() {
@@ -46,10 +55,16 @@ export class JoyMechanic {
     return { x, z, vx: 0, vz: 0, wanderT: 0, wx: 0, wz: 0 };
   }
 
+  coverageFrac() {
+    return this.visited.size / (this.gridN * this.gridN);
+  }
+
   progress() {
-    return this.p.mode === 'move'
-      ? { done: Math.min(Math.floor(this.meter), this.p.seconds), total: this.p.seconds }
-      : { done: this.catches, total: this.p.catches };
+    if (this.p.mode === 'paint') {
+      const frac = Math.min(1, this.coverageFrac() / this.p.coverage);
+      return { done: Math.floor(frac * 8), total: 8 };
+    }
+    return { done: this.catches, total: this.p.catches };
   }
 
   update(dt) {
@@ -68,13 +83,25 @@ export class JoyMechanic {
 
     if (this.complete) return;
 
-    if (this.p.mode === 'move') {
-      this.meter += s.moving ? dt : -dt * (this.p.drain || 1.2);
-      this.meter = Math.max(0, this.meter);
+    if (this.p.mode === 'paint') {
+      if (s.moving) {
+        // permanent strokes: light stays where you ran
+        const last = this.strokes[this.strokes.length - 1];
+        if (!last || Math.hypot(s.x - last.x, s.z - last.z) > 12) {
+          this.strokes.push({ x: s.x, z: s.z });
+          if (this.strokes.length > 900) this.strokes.shift();
+        }
+        // brush the cell underfoot — coverage is earned stride by stride
+        const ci = Math.floor((s.x + this.gridHalf) / this.cell);
+        const cj = Math.floor((s.z + this.gridHalf) / this.cell);
+        if (ci >= 0 && cj >= 0 && ci < this.gridN && cj < this.gridN) {
+          this.visited.add(ci + ',' + cj);
+        }
+      }
       Music.setMood({
-        tension: this.scene.def.mood.tension * (1 - this.meter / this.p.seconds),
+        tension: this.scene.def.mood.tension * (1 - Math.min(1, this.coverageFrac() / this.p.coverage)),
       });
-      if (this.meter >= this.p.seconds) this.finish();
+      if (this.coverageFrac() >= this.p.coverage) this.finish();
       return;
     }
 
@@ -132,6 +159,29 @@ export class JoyMechanic {
   figurePose() { return null; } // run/idle — the running IS the pose
 
   drawWorld(ctx, pr) {
+    // painted floor: the permanent record of everywhere you've run.
+    // One continuous path per pass (split at gaps between runs) so the
+    // strokes read as smooth ink, not beads.
+    if (this.strokes && this.strokes.length > 1) {
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      for (const [color, lw] of [['rgba(0,0,0,0.12)', 15], ['rgba(255,255,255,0.30)', 8]]) {
+        ctx.beginPath();
+        let pen = false;
+        for (let i = 0; i < this.strokes.length; i++) {
+          const q = this.strokes[i];
+          const p = pr({ x: q.x, y: this.scene.floorY - 1, z: q.z });
+          const prev = this.strokes[i - 1];
+          const gap = !prev || Math.hypot(q.x - prev.x, q.z - prev.z) > 60;
+          if (gap || !pen) { ctx.moveTo(p.x, p.y); pen = true; }
+          else ctx.lineTo(p.x, p.y);
+        }
+        ctx.strokeStyle = color;
+        ctx.lineWidth = lw;
+        ctx.stroke();
+      }
+    }
+
     // the trail, drawn on the floor as fading light
     if (this.trail.length > 1) {
       for (let i = 1; i < this.trail.length; i++) {
@@ -179,11 +229,11 @@ export class JoyMechanic {
 
   drawUI(ctx, w, h) {
     if (this.complete) return;
-    if (this.p.mode === 'move' && this.t > 2 && this.meter < 2) {
-      text(ctx, 'run. don’t stop.', w / 2, h * 0.8, 14, Palette.get('textFaint'));
+    if (this.p.mode === 'paint' && this.t > 2 && this.coverageFrac() < 0.06) {
+      haloText(ctx, 'the floor remembers where you run. cover it.', w / 2, h * 0.8, 14, 'rgba(255,255,255,0.75)');
     }
     if (this.p.mode === 'chase' && this.catches === 0 && this.t > 2 && this.t < 10) {
-      text(ctx, 'catch it', w / 2, h * 0.8, 14, Palette.get('textFaint'));
+      haloText(ctx, 'catch it', w / 2, h * 0.8, 14, 'rgba(255,255,255,0.75)');
     }
   }
 }

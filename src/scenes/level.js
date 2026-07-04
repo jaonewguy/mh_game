@@ -15,11 +15,11 @@
 import { Input } from '../core/input.js';
 import { Flow } from '../core/flow.js';
 import { Data } from '../core/data.js';
-import { projector } from '../render/iso.js';
+import { project } from '../render/iso.js';
 import * as Stick from '../render/stickman.js';
 import { Room } from '../render/room.js';
 import { DustField } from '../render/fx.js';
-import { contactShadow, text, quadPath } from '../render/draw.js';
+import { contactShadow, text, haloText, quadPath } from '../render/draw.js';
 import { Palette } from '../palette.js';
 import { Sfx } from '../audio/sfx.js';
 import { Music } from '../audio/music.js';
@@ -51,6 +51,8 @@ export class LevelScene {
     this.tremorLevel = 0;
     this.exit = null;
     this.darkFade = 1; // darkness strength while a dark mechanic runs
+    this.camOx = null; // smoothed camera (rooms can outgrow the screen)
+    this.camOy = null;
 
     this.room = new Room({
       floorHalf: this.roomHalf(), wallH: this.wallHeight(), floorY: this.floorY,
@@ -66,8 +68,27 @@ export class LevelScene {
     this.mech = new MECHANICS[this.def.mechanic](this, this.def);
   }
 
-  roomHalf()   { return Math.min(this.game.canvas.width * 0.16, 155); }
+  // Rooms grow as the game goes on — `room.scale` in the level JSON
+  // makes the floor larger than the screen; the camera follows.
+  roomScale()  { return (this.def.room && this.def.room.scale) || 1; }
+  roomHalf()   { return Math.min(this.game.canvas.width * 0.16, 155) * this.roomScale(); }
   wallHeight() { return Math.min(this.game.canvas.height * 0.34, 260); }
+
+  // Blend between the classic fixed frame (small rooms) and following
+  // the figure (big rooms). Fully following by scale 1.3.
+  camTargets() {
+    const w = this.game.canvas.width, h = this.game.canvas.height;
+    const k = Math.max(0, Math.min(1, (this.roomScale() - 1) / 0.3));
+    const s = this.stick;
+    const fixedOx = w / 2;
+    const fixedOy = h * 0.62 - this.floorY;
+    const followOx = w / 2 - (s.x - s.z);
+    const followOy = h * 0.58 - (s.x + s.z) / 2 - this.floorY;
+    return {
+      ox: fixedOx + (followOx - fixedOx) * k,
+      oy: fixedOy + (followOy - fixedOy) * k,
+    };
+  }
 
   // kept for tests/tools: the breath phase if this level breathes
   breathK() { return this.mech.breathK ? this.mech.breathK() : 0; }
@@ -127,6 +148,12 @@ export class LevelScene {
 
     this.room.update(dt);
     this.dust.update(dt);
+
+    // ease the camera toward where it wants to be
+    const cam = this.camTargets();
+    if (this.camOx === null) { this.camOx = cam.ox; this.camOy = cam.oy; }
+    this.camOx += (cam.ox - this.camOx) * Math.min(1, dt * 4);
+    this.camOy += (cam.oy - this.camOy) * Math.min(1, dt * 4);
   }
 
   // ---- draw -----------------------------------------------------------
@@ -141,8 +168,13 @@ export class LevelScene {
       (Math.random() - 0.5) * 14 * this.shake,
       (Math.random() - 0.5) * 10 * this.shake
     );
-    const cam = this.floorY - h * 0.62;
-    const pr = projector(this.game.canvas, cam);
+    if (this.camOx === null) {
+      const c = this.camTargets();
+      this.camOx = c.ox;
+      this.camOy = c.oy;
+    }
+    const cam = { ox: this.camOx, oy: this.camOy, y: 0 };
+    const pr = (p) => project(p, cam);
     const s = this.stick;
 
     this.room.drawBack(ctx, pr);
@@ -256,8 +288,8 @@ export class LevelScene {
     if (this.state === 'play' && this.mech.drawUI) this.mech.drawUI(ctx, w, h);
     if (this.state === 'complete') {
       const a = Math.min(this.t / 0.8, 1);
-      text(ctx, COMPLETE_WORD[this.def.mechanic] || 'done.', w / 2, h * 0.16, 20, Palette.get('text'), a);
-      text(ctx, 'walk to the light', w / 2, h * 0.88, 13, Palette.get('textFaint'), a);
+      haloText(ctx, COMPLETE_WORD[this.def.mechanic] || 'done.', w / 2, h * 0.16, 20, Palette.get('text'), a);
+      haloText(ctx, 'walk to the light', w / 2, h * 0.88, 13, 'rgba(255,255,255,0.75)', a);
     }
   }
 }
