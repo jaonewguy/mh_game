@@ -4,7 +4,7 @@ name: pages
 
 on:
   push:
-    branches: [claude/stickman-falling-game-x393y9]
+    branches: [claude/chroma-v2-color-world]
   workflow_dispatch: {}
 
 permissions:
