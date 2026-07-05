@@ -224,24 +224,33 @@ export class JoyMechanic {
 
     if (this.spark && !this.complete) {
       const sp = this.spark;
-      // ground ring so its position on the floor is readable
+      // dark contact pool grounds the spark against the white floor
       const g = pr({ x: sp.x, y: this.scene.floorY, z: sp.z });
       ctx.beginPath();
-      ctx.ellipse(g.x, g.y, 10, 5, 0, 0, Math.PI * 2);
-      ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+      ctx.ellipse(g.x, g.y, 12, 6, 0, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(0,0,0,0.30)';
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(0,0,0,0.5)';
+      ctx.lineWidth = 3;
+      ctx.stroke();
+      ctx.strokeStyle = Palette.roleRGBA('joyTrail', 0.8);
       ctx.lineWidth = 1.5;
       ctx.stroke();
       // the spark itself, hovering and shimmering
       const p = pr({ x: sp.x, y: this.scene.floorY - 22 + Math.sin(this.t * 6) * 4, z: sp.z });
-      const grad = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, 16);
-      grad.addColorStop(0, Palette.roleRGBA('joyTrail', 0.9));
+      const grad = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, 18);
+      grad.addColorStop(0, Palette.roleRGBA('joyTrail', 0.95));
       grad.addColorStop(1, Palette.roleRGBA('joyTrail', 0));
       ctx.fillStyle = grad;
-      ctx.fillRect(p.x - 16, p.y - 16, 32, 32);
+      ctx.fillRect(p.x - 18, p.y - 18, 36, 36);
+      // outlined core reads on any background
       ctx.beginPath();
-      ctx.arc(p.x, p.y, 2.5, 0, Math.PI * 2);
+      ctx.arc(p.x, p.y, 3.5, 0, Math.PI * 2);
       ctx.fillStyle = '#fff';
       ctx.fill();
+      ctx.strokeStyle = 'rgba(0,0,0,0.65)';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
     }
   }
 

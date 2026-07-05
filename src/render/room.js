@@ -11,7 +11,7 @@
  * drawFront (near walls) so the figure renders in between and shows
  * through the near glass.
  */
-import { floorSlab, glassWall, floorWash } from './draw.js';
+import { floorSlab, glassWall, floorWash, flora } from './draw.js';
 
 export class Room {
   constructor({ floorHalf, wallH, floorY }) {
@@ -72,6 +72,8 @@ export class Room {
     for (const w of this._walls()) {
       if (w.d < 0) glassWall(ctx, pr, w.a, w.b, this.floorY - this.wallH);
     }
+    // vegetation lives inside the glass, in front of the far walls
+    if (opts.wash) flora(ctx, pr, this.floorHalf, this.floorY, opts.wash.t);
   }
 
   drawFront(ctx, pr) {

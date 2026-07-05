@@ -92,7 +92,7 @@ export class BreathMechanic {
           this.cycleT = 0;
           this.state = 'together';
           this.stateT = 0;
-          Sfx.good();
+          this.goodCycle(); // the walkthrough breath was a real breath
         }
         break;
       }
@@ -104,6 +104,7 @@ export class BreathMechanic {
           this.cycleT = 0;
           this.state = 'alone';
           this.stateT = 0;
+          this.goodCycle(); // so was the guided one
         }
         break;
       }

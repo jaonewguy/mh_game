@@ -2,8 +2,16 @@
   "id": "calm-2",
   "title": "the small room",
   "mechanic": "breath",
-  "mood": { "tension": 0.7 },
-  "room": { "startScale": 0.35 },
-  "params": { "cycleSec": 4.5, "cyclesNeeded": 4, "effect": "walls" },
+  "mood": {
+    "tension": 0.7
+  },
+  "room": {
+    "startScale": 0.35
+  },
+  "params": {
+    "cycleSec": 4.5,
+    "cyclesNeeded": 3,
+    "effect": "walls"
+  },
   "intro": "the walls came in again. your breath moves them."
 }

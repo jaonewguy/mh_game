@@ -59,9 +59,9 @@ test('palette: emotion-domain roles turn their color when unlocked', async () =>
   assert.equal(Palette.roleRGBA('breathRing', 0.5), 'rgba(255,255,255,0.5)');
   assert.equal(Palette.roleRGBA('hopeLight', 1), 'rgba(255,255,255,1)');
 
-  // unlocked: the domain takes the emotion's color (calm = #7FE0B2)
+  // unlocked: the domain takes the emotion's color (calm = #6BCB77)
   Palette.unlock('calm');
-  assert.equal(Palette.roleRGBA('breathRing', 0.5), 'rgba(127,224,178,0.5)');
+  assert.equal(Palette.roleRGBA('breathRing', 0.5), 'rgba(107,203,119,0.5)');
   // other domains stay monochrome until their emotion returns
   assert.equal(Palette.roleRGBA('joyTrail', 1), 'rgba(255,255,255,1)');
 

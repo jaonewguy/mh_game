@@ -12,7 +12,7 @@ const STORAGE_KEY = 'mh_game.unlocked_colors';
 
 // The six emotions the player can eventually reclaim.
 const SLOTS = [
-  { name: 'calm',    color: '#7FE0B2' },
+  { name: 'calm',    color: '#6BCB77' }, // plant green — calm grows things
   { name: 'hope',    color: '#5EC8FF' },
   { name: 'joy',     color: '#FFD166' },
   { name: 'courage', color: '#FF6B6B' },

@@ -102,6 +102,9 @@ export class Abilities {
       ctx.arc(p.x, p.y, 1.6, 0, Math.PI * 2);
       ctx.fillStyle = Palette.roleRGBA('hopeLight', 0.75);
       ctx.fill();
+      ctx.strokeStyle = 'rgba(0,0,0,0.4)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
     }
   }
 }

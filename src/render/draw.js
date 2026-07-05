@@ -83,6 +83,53 @@ export function floorWash(ctx, pr, half, fy, t, focus) {
   ctx.restore();
 }
 
+// Life coming back: once calm is reclaimed, plants sprout around the
+// floor and grow taller with every color found — by the last chapter
+// the rooms are gardens. Deterministic positions (seeded), swaying
+// stems with leaf strokes, in calm's plant green.
+export function flora(ctx, pr, half, fy, t) {
+  if (!Palette.isUnlocked('calm')) return;
+  const growth = 0.3 + 0.7 * (Palette.unlockedCount() / Palette.slots.length);
+
+  let seed = 970;
+  const rand = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+
+  ctx.lineCap = 'round';
+  for (let i = 0; i < 12; i++) {
+    const ang = rand() * Math.PI * 2;
+    const rr = half * (0.5 + rand() * 0.42);
+    const px = Math.cos(ang) * rr, pz = Math.sin(ang) * rr;
+    const h = (10 + rand() * 34) * growth;
+    const lean = (rand() - 0.5) * 14;
+    const sway = Math.sin(t * 1.1 + i * 1.7) * (1.5 + h * 0.05);
+
+    const base = pr({ x: px, y: fy, z: pz });
+    const top = pr({ x: px, y: fy - h, z: pz });
+    const leafY = fy - h * 0.55;
+    const leafP = pr({ x: px, y: leafY, z: pz });
+
+    for (const [color, lw] of [['rgba(0,0,0,0.45)', 3.5], [Palette.colorRGBA('calm', 0.85), 1.8]]) {
+      ctx.strokeStyle = color;
+      ctx.lineWidth = lw;
+      // stem, bowing with its lean and the breeze
+      ctx.beginPath();
+      ctx.moveTo(base.x, base.y);
+      ctx.quadraticCurveTo(
+        base.x + lean * 0.4, (base.y + top.y) / 2,
+        top.x + lean + sway, top.y
+      );
+      ctx.stroke();
+      // two leaves partway up
+      ctx.beginPath();
+      ctx.moveTo(leafP.x + lean * 0.25, leafP.y);
+      ctx.lineTo(leafP.x + lean * 0.25 - 6 - h * 0.1, leafP.y - 4 - h * 0.06);
+      ctx.moveTo(leafP.x + lean * 0.25, leafP.y - 3);
+      ctx.lineTo(leafP.x + lean * 0.25 + 6 + h * 0.1, leafP.y - 6 - h * 0.06);
+      ctx.stroke();
+    }
+  }
+}
+
 // Contact shadow on the floor plane; nearness in (0,1], 1 = touching.
 export function contactShadow(ctx, pr, x, z, floorY, nearness) {
   const p = pr({ x, y: floorY, z });
