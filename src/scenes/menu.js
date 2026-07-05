@@ -125,6 +125,8 @@ export class MenuScene {
       ['', 'good breaths calm the world'],
       ['in the dark', 'walk onto the ringed lights to gather them'],
       ['with the spark', 'chase it — keep moving'],
+      ['dash', 'double-tap a direction (after joy returns)'],
+      ['dark shapes', 'walk toward them. they hate that'],
       ['advance text', 'SPACE'],
       ['restart level', 'R'],
       ['menu', 'ESC'],

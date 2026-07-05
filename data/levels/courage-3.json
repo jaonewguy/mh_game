@@ -1,0 +1,9 @@
+{
+  "id": "courage-3",
+  "title": "every direction",
+  "mechanic": "courage",
+  "mood": { "tension": 0.9 },
+  "room": { "scale": 1.7, "open": ["zneg", "xpos"] },
+  "params": { "shadows": 2, "advance": 200, "retreat": 165, "shrinkTime": 5 },
+  "intro": "there are two of them. face them anyway."
+}

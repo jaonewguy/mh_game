@@ -1,0 +1,9 @@
+{
+  "id": "courage-2",
+  "title": "what you can't outrun",
+  "mechanic": "courage",
+  "mood": { "tension": 0.85 },
+  "room": { "scale": 1.5, "open": ["zneg"] },
+  "params": { "shadows": 1, "advance": 265, "retreat": 185, "shrinkTime": 6, "needDash": true },
+  "intro": "running away has stopped working."
+}

@@ -14,13 +14,16 @@
 import { floorSlab, glassWall, floorWash, flora } from './draw.js';
 
 export class Room {
-  constructor({ floorHalf, wallH, floorY }) {
+  // open: wall sides that simply aren't there anymore — the world
+  // beginning to open up. Sides: 'xpos', 'xneg', 'zpos', 'zneg'.
+  constructor({ floorHalf, wallH, floorY, open = [] }) {
     this.floorHalf = floorHalf;
     this.wallH = wallH;
     this.floorY = floorY;
     this.targetHalf = floorHalf;
     this.half = floorHalf;
     this.tremor = 0;
+    this.open = new Set(open);
   }
 
   // Scenes call this each frame with fresh canvas-derived sizes so the
@@ -56,11 +59,11 @@ export class Room {
     const fy = this.floorY;
     const j = () => (this.tremor > 0 ? (Math.random() - 0.5) * 6 * this.tremor : 0);
     return [
-      { d: -1, a: { x: -hg + j(), y: fy, z: -hg }, b: { x: -hg + j(), y: fy, z: hg } },
-      { d: -1, a: { x: -hg, y: fy, z: -hg + j() }, b: { x: hg, y: fy, z: -hg + j() } },
-      { d:  1, a: { x:  hg + j(), y: fy, z: -hg }, b: { x: hg + j(), y: fy, z: hg } },
-      { d:  1, a: { x: -hg, y: fy, z:  hg + j() }, b: { x: hg, y: fy, z: hg + j() } },
-    ];
+      { side: 'xneg', d: -1, a: { x: -hg + j(), y: fy, z: -hg }, b: { x: -hg + j(), y: fy, z: hg } },
+      { side: 'zneg', d: -1, a: { x: -hg, y: fy, z: -hg + j() }, b: { x: hg, y: fy, z: -hg + j() } },
+      { side: 'xpos', d:  1, a: { x:  hg + j(), y: fy, z: -hg }, b: { x: hg + j(), y: fy, z: hg } },
+      { side: 'zpos', d:  1, a: { x: -hg, y: fy, z:  hg + j() }, b: { x: hg, y: fy, z: hg + j() } },
+    ].filter(w => !this.open.has(w.side));
   }
 
   // opts.wash: { t, focus } — reclaimed colors drift across the floor

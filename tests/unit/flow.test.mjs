@@ -14,10 +14,11 @@ test('flow: builds the node spine from the real chapters.json', async () => {
   Flow.build();
   const types = Flow.nodes.map(n => n.type);
 
-  // prologue -> its story -> calm -> hope -> joy (each: story + 3
-  // levels + unlock) -> end
+  // prologue -> its story -> calm -> hope -> joy -> courage (each:
+  // story + 3 levels + unlock) -> end
   assert.deepEqual(types, [
     'prologue', 'story',
+    'story', 'level', 'level', 'level', 'unlock',
     'story', 'level', 'level', 'level', 'unlock',
     'story', 'level', 'level', 'level', 'unlock',
     'story', 'level', 'level', 'level', 'unlock',
@@ -61,6 +62,7 @@ test('flow: an "end" save routes into the first chapter with a locked color', as
 
   // all shipped chapters finished -> the end card is really the end
   Palette.unlock('joy');
+  Palette.unlock('courage');
   Flow.enter(fakeGame, { type: 'end' });
   assert.deepEqual(Save.data.node, { type: 'end' });
   Palette.resetAll();

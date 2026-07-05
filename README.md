@@ -24,8 +24,18 @@ clarity.
   black. Each one you reach joins you as a firefly and lets you see
   farther — until the way out appears.
 - **Chapter Three — Joy**: movement. The figure runs faster here and
-  leaves a trail of light — keep moving to fill the meter, then chase
-  a quick bright spark that flees and teases until you catch it.
+  leaves a trail of light — paint the floor of a room bigger than the
+  screen, then chase a quick bright spark that flees and teases until
+  you catch it (or breathe, and it comes to you).
+- **Chapter Four — Courage**: the rooms are missing walls now, and
+  dark shapes have come in. They grow when you back away and falter
+  when you walk toward them — dissolve them with sustained
+  confrontation or drive them off the edge of the world. One of them
+  is faster than your walk; joy's dash (double-tap a direction) is
+  how you close the distance.
+- **Carried abilities**: reclaimed emotions stay with you — calm's
+  breath (hold SPACE anywhere), hope's glow and fireflies, joy's dash.
+  Colors wash across floors, plants grow with every color found.
 - Adaptive procedural score: an ambient bed that darkens with tension,
   swells with your breathing, a heartbeat pulse, and one generative
   voice per unlocked color.
@@ -108,8 +118,9 @@ node tools/shoot.cjs   # full playthrough, screenshots to tools/out
 
 ## Roadmap
 
-- Chapters 4–6 (courage, warmth, clarity) — gated on the Chapter 3
-  playtest
+- Chapters 5–6 (warmth, clarity) — gated on the courage playtest
+- The Okami drawing stage (paint with earned colors; your art returns
+  in the finale)
 - Color bleed-in across previously visited spaces
 - Composed music stems layered over the procedural bed
 - Touch controls + itch.io packaging

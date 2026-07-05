@@ -26,12 +26,13 @@ import { Music } from '../audio/music.js';
 import { BreathMechanic } from './mechanics/breath.js';
 import { SeekMechanic } from './mechanics/seek.js';
 import { JoyMechanic } from './mechanics/joy.js';
+import { CourageMechanic } from './mechanics/courage.js';
 import { Abilities } from './abilities.js';
 
-const MECHANICS = { breath: BreathMechanic, seek: SeekMechanic, joy: JoyMechanic };
+const MECHANICS = { breath: BreathMechanic, seek: SeekMechanic, joy: JoyMechanic, courage: CourageMechanic };
 
 // the word each mechanic earns when its level goes quiet
-const COMPLETE_WORD = { breath: 'still.', seek: 'lighter.', joy: 'alive.' };
+const COMPLETE_WORD = { breath: 'still.', seek: 'lighter.', joy: 'alive.', courage: 'faced.' };
 
 export class LevelScene {
   constructor(game, { node }) {
@@ -57,6 +58,7 @@ export class LevelScene {
 
     this.room = new Room({
       floorHalf: this.roomHalf(), wallH: this.wallHeight(), floorY: this.floorY,
+      open: (this.def.room && this.def.room.open) || [],
     });
     const start = (this.def.room && this.def.room.startScale) || 1;
     this.startHalf = this.room.floorHalf * start;
@@ -100,7 +102,8 @@ export class LevelScene {
     this.elapsed += dt;
     this.room.resize(this.roomHalf(), this.wallHeight());
     this.room.tremor = this.tremorLevel;
-    this.shake = this.tremorLevel * 0.12;
+    // steady tremor shake, plus one-off kicks (shadow shoves) that decay
+    this.shake = Math.max(this.tremorLevel * 0.12, this.shake - dt * 2.5);
 
     if (Input.pressed('restart')) { this.game.goto('level', { node: this.node }); return; }
     if (Input.pressed('back'))    { this.game.goto('menu'); return; }
@@ -128,6 +131,7 @@ export class LevelScene {
     s.y = this.floorY - Stick.hipHeight(s.moving ? 0.12 : 0.06, s.scale);
 
     this.abilities.update(dt);
+    this.room.clamp(s); // dashes respect the walls too
 
     if (this.state === 'play') {
       this.mech.update(dt);
@@ -181,6 +185,8 @@ export class LevelScene {
     const pr = (p) => project(p, cam);
     const s = this.stick;
 
+    // what lies beyond the missing walls (horizon light, someday sky)
+    if (this.mech.drawBackdrop) this.mech.drawBackdrop(ctx, pr);
     this.room.drawBack(ctx, pr, { wash: { t: this.elapsed, focus: s } });
     contactShadow(ctx, pr, s.x, s.z, this.floorY, 1);
     if (this.state !== 'intro' && this.mech.drawWorld) this.mech.drawWorld(ctx, pr);

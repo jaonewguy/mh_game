@@ -13,9 +13,14 @@ test('unlock ceremony: color + music voice arrive, and both survive a reload', a
     // generous timeout: game time stretches under CI load (dt clamp)
     await page.waitForFunction(() => window.__palette.isUnlocked('hope'), null, { timeout: 25000 });
 
+    // the voice ramps in over seconds; poll rather than racing the
+    // first scheduled automation value
     const music = await page.evaluate(() => window.__music.debugState());
     if (music.started && music.ctxState === 'running') {
-      assert.ok(music.voices.hope > 0, `hope voice should fade in: ${JSON.stringify(music.voices)}`);
+      await page.waitForFunction(
+        () => window.__music.debugState().voices.hope > 0,
+        null, { timeout: 8000 }
+      ).catch(() => assert.fail(`hope voice never faded in: ${JSON.stringify(music.voices)}`));
     }
 
     // ceremony flows onward on its own — into the next chapter's story
