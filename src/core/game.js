@@ -54,6 +54,7 @@ export class Game {
       this.fade.alpha += (this.fade.dir === -1 ? dt : -dt) * 2.2;
       if (this.fade.dir === -1 && this.fade.alpha >= 1) {
         this.fade.alpha = 1;
+        if (this.scene && this.scene.destroy) this.scene.destroy();
         const SceneClass = this.scenes.get(this.fade.next);
         this.scene = new SceneClass(this, this.fade.nextParams || {});
         this.sceneName = this.fade.next;

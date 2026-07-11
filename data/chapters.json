@@ -8,6 +8,7 @@
     "chapter:courage",
     "chapter:warmth",
     "chapter:clarity",
+    "epilogue",
     "end"
   ],
   "chapters": {
@@ -66,9 +67,7 @@
       "emotion": "clarity",
       "story": "clarity",
       "levels": [
-        "clarity-1",
-        "clarity-2",
-        "clarity-3"
+        "clarity-1"
       ]
     }
   }

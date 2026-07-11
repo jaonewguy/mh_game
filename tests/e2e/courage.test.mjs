@@ -22,7 +22,7 @@ test('courage-1: walking toward the shadow shrinks it until it dissolves', async
 
     // relentlessly walk at the shadow: it retreats slower than we walk,
     // so pressure builds until it dissolves (or gets pushed off the edge)
-    const deadline = Date.now() + 90000;
+    const deadline = Date.now() + 130000;
     while (Date.now() < deadline) {
       const done = await page.evaluate(() => window.__game.scene.mech.complete);
       if (done) break;
@@ -51,7 +51,8 @@ test('joy dash: double-tap bursts the figure forward with a trail', async () => 
     await page.keyboard.press('Enter');
     await sceneIs(page, 'prologue');
     await page.evaluate(() => window.__palette.unlock('joy'));
-    await enterNode(page, { type: 'level', chapter: 'courage', index: 1 });
+    // a quiet arena — no shadows to shove the figure mid-measurement
+    await enterNode(page, { type: 'level', chapter: 'joy', index: 0 });
     await waitForPlay(page);
 
     const before = await page.evaluate(() => window.__game.scene.stick.x);

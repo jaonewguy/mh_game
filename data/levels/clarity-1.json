@@ -1,10 +1,10 @@
 {
   "id": "clarity-1",
-  "title": "the fog",
+  "title": "see it whole",
   "mechanic": "clarity",
-  "mood": { "tension": 0.6 },
-  "room": { "scale": 1.5, "open": ["zneg"] },
-  "horizon": 0.18,
-  "params": { "vantages": 3, "holdSec": 1.2 },
+  "mood": { "tension": 0.7 },
+  "room": { "scale": 2.0, "open": ["zneg", "xpos", "zpos"] },
+  "horizon": 0.22,
+  "params": { "vantages": 4, "holdSec": 1.2 },
   "intro": "you can only see a few steps. that was never the whole story."
 }

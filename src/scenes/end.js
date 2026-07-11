@@ -26,7 +26,10 @@ export class EndScene {
     ctx.fillRect(0, 0, w, h);
 
     const a = Math.min(1, this.t / 1.5);
-    text(ctx, 'this is where the path ends, for now.', w / 2, h * 0.4, 22, Palette.get('text'), a);
+    const whole = Palette.unlockedCount() >= Palette.slots.length;
+    text(ctx, whole
+      ? 'the world has all its colors again.'
+      : 'this is where the path ends, for now.', w / 2, h * 0.4, 22, Palette.get('text'), a);
 
     const slots = Palette.slots;
     const gap = 34, r = 8;
@@ -47,7 +50,9 @@ export class EndScene {
     }
 
     text(ctx, `${Palette.unlockedCount()} of ${slots.length} colors found`, w / 2, h * 0.52 + 34, 13, Palette.get('textFaint'), a);
-    text(ctx, 'more chapters are coming.', w / 2, h * 0.66, 14, Palette.get('textFaint'), a);
+    text(ctx, Palette.unlockedCount() >= slots.length
+      ? 'thank you for playing.'
+      : 'more chapters are coming.', w / 2, h * 0.66, 14, Palette.get('textFaint'), a);
     if (this.t > 1) {
       const pulse = 0.25 + Math.abs(Math.sin(this.t * 2)) * 0.2;
       text(ctx, 'space — menu', w / 2, h * 0.8, 12, `rgba(255,255,255,${pulse})`);

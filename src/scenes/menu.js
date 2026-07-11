@@ -167,6 +167,7 @@ export class MenuScene {
         const ch = Data.chapters.chapters[node.chapter];
         return `unlock — ${ch.emotion}`;
       }
+      case 'epilogue': return 'epilogue — draw the morning';
       case 'end': return 'end card';
       default: return node.type;
     }

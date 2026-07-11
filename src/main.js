@@ -15,6 +15,7 @@ import { PrologueScene } from './scenes/prologue.js';
 import { StoryScene } from './scenes/storybeat.js';
 import { LevelScene } from './scenes/level.js';
 import { UnlockScene } from './scenes/unlock.js';
+import { EpilogueScene } from './scenes/epilogue.js';
 import { EndScene } from './scenes/end.js';
 
 const canvas = document.getElementById('game');
@@ -39,6 +40,7 @@ game.register('prologue', PrologueScene);
 game.register('story', StoryScene);
 game.register('level', LevelScene);
 game.register('unlock', UnlockScene);
+game.register('epilogue', EpilogueScene);
 game.register('end', EndScene);
 
 Data.loadAll().then(() => {

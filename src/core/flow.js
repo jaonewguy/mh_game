@@ -29,6 +29,8 @@ export const Flow = {
         if (ch.story) nodes.push({ type: 'story', id: ch.story });
         ch.levels.forEach((_, i) => nodes.push({ type: 'level', chapter: id, index: i }));
         nodes.push({ type: 'unlock', chapter: id });
+      } else if (step === 'epilogue') {
+        nodes.push({ type: 'epilogue' });
       } else if (step === 'end') {
         nodes.push({ type: 'end' });
       }
@@ -66,6 +68,7 @@ export const Flow = {
       case 'story':    game.goto('story', { node }); break;
       case 'level':    game.goto('level', { node }); break;
       case 'unlock':   game.goto('unlock', { node }); break;
+      case 'epilogue': game.goto('epilogue'); break;
       case 'end':      game.goto('end'); break;
     }
   },
