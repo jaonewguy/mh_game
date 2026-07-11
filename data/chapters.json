@@ -1,29 +1,75 @@
 {
-  "flow": ["prologue", "story:prologue", "chapter:calm", "chapter:hope", "chapter:joy", "chapter:courage", "end"],
+  "flow": [
+    "prologue",
+    "story:prologue",
+    "chapter:calm",
+    "chapter:hope",
+    "chapter:joy",
+    "chapter:courage",
+    "chapter:warmth",
+    "chapter:clarity",
+    "end"
+  ],
   "chapters": {
     "calm": {
-      "title": "chapter one — calm",
+      "title": "chapter one \u2014 calm",
       "emotion": "calm",
       "story": "calm",
-      "levels": ["calm-1", "calm-2", "calm-3"]
+      "levels": [
+        "calm-1",
+        "calm-2",
+        "calm-3"
+      ]
     },
     "hope": {
-      "title": "chapter two — hope",
+      "title": "chapter two \u2014 hope",
       "emotion": "hope",
       "story": "hope",
-      "levels": ["hope-1", "hope-2", "hope-3"]
+      "levels": [
+        "hope-1",
+        "hope-2",
+        "hope-3"
+      ]
     },
     "joy": {
-      "title": "chapter three — joy",
+      "title": "chapter three \u2014 joy",
       "emotion": "joy",
       "story": "joy",
-      "levels": ["joy-1", "joy-2", "joy-3"]
+      "levels": [
+        "joy-1",
+        "joy-2",
+        "joy-3"
+      ]
     },
     "courage": {
-      "title": "chapter four — courage",
+      "title": "chapter four \u2014 courage",
       "emotion": "courage",
       "story": "courage",
-      "levels": ["courage-1", "courage-2", "courage-3"]
+      "levels": [
+        "courage-1",
+        "courage-2",
+        "courage-3"
+      ]
+    },
+    "warmth": {
+      "title": "chapter five \u2014 warmth",
+      "emotion": "warmth",
+      "story": "warmth",
+      "levels": [
+        "warmth-1",
+        "warmth-2",
+        "warmth-3"
+      ]
+    },
+    "clarity": {
+      "title": "chapter six \u2014 clarity",
+      "emotion": "clarity",
+      "story": "clarity",
+      "levels": [
+        "clarity-1",
+        "clarity-2",
+        "clarity-3"
+      ]
     }
   }
 }

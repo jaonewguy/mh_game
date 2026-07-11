@@ -32,9 +32,11 @@ const ROLES = {
   text:      { locked: 'rgba(255,255,255,0.85)', emotion: null },
   textFaint: { locked: 'rgba(255,255,255,0.4)',  emotion: null },
   // domains that take on their emotion's color once it's reclaimed
-  breathRing: { locked: '#FFFFFF', emotion: 'calm' },
-  hopeLight:  { locked: '#FFFFFF', emotion: 'hope' },
-  joyTrail:   { locked: '#FFFFFF', emotion: 'joy' },
+  breathRing:  { locked: '#FFFFFF', emotion: 'calm' },
+  hopeLight:   { locked: '#FFFFFF', emotion: 'hope' },
+  joyTrail:    { locked: '#FFFFFF', emotion: 'joy' },
+  warmthGlow:  { locked: '#FFFFFF', emotion: 'warmth' },
+  clarityMark: { locked: '#FFFFFF', emotion: 'clarity' },
 };
 
 function hexToRgb(hex) {

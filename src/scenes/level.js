@@ -19,7 +19,7 @@ import { project } from '../render/iso.js';
 import * as Stick from '../render/stickman.js';
 import { Room } from '../render/room.js';
 import { DustField } from '../render/fx.js';
-import { contactShadow, text, haloText, quadPath } from '../render/draw.js';
+import { contactShadow, text, haloText, quadPath, horizonGlow } from '../render/draw.js';
 import { Palette } from '../palette.js';
 import { Sfx } from '../audio/sfx.js';
 import { Music } from '../audio/music.js';
@@ -27,12 +27,20 @@ import { BreathMechanic } from './mechanics/breath.js';
 import { SeekMechanic } from './mechanics/seek.js';
 import { JoyMechanic } from './mechanics/joy.js';
 import { CourageMechanic } from './mechanics/courage.js';
+import { WarmthMechanic } from './mechanics/warmth.js';
+import { ClarityMechanic } from './mechanics/clarity.js';
 import { Abilities } from './abilities.js';
 
-const MECHANICS = { breath: BreathMechanic, seek: SeekMechanic, joy: JoyMechanic, courage: CourageMechanic };
+const MECHANICS = {
+  breath: BreathMechanic, seek: SeekMechanic, joy: JoyMechanic,
+  courage: CourageMechanic, warmth: WarmthMechanic, clarity: ClarityMechanic,
+};
 
 // the word each mechanic earns when its level goes quiet
-const COMPLETE_WORD = { breath: 'still.', seek: 'lighter.', joy: 'alive.', courage: 'faced.' };
+const COMPLETE_WORD = {
+  breath: 'still.', seek: 'lighter.', joy: 'alive.',
+  courage: 'faced.', warmth: 'warmer.', clarity: 'clear.',
+};
 
 export class LevelScene {
   constructor(game, { node }) {
@@ -185,8 +193,11 @@ export class LevelScene {
     const pr = (p) => project(p, cam);
     const s = this.stick;
 
-    // what lies beyond the missing walls (horizon light, someday sky)
-    if (this.mech.drawBackdrop) this.mech.drawBackdrop(ctx, pr);
+    // what lies beyond the missing walls: the sun, a little higher
+    // with every chapter
+    if (this.room.open.size) {
+      horizonGlow(ctx, pr, this.room, this.floorY, this.def.horizon || 0.13);
+    }
     this.room.drawBack(ctx, pr, { wash: { t: this.elapsed, focus: s } });
     contactShadow(ctx, pr, s.x, s.z, this.floorY, 1);
     if (this.state !== 'intro' && this.mech.drawWorld) this.mech.drawWorld(ctx, pr);
@@ -199,6 +210,8 @@ export class LevelScene {
     // darkness, and the lights that live above it
     if (this.mech.darkness && this.darkFade > 0.01) this.applyDarkness(ctx, pr);
     if (this.mech.drawLights && this.state !== 'intro') this.mech.drawLights(ctx, pr);
+    // fog and other whole-scene veils
+    if (this.mech.drawOverlay && this.state !== 'intro') this.mech.drawOverlay(ctx, pr);
     if (this.exit) this.drawExit(ctx, pr);
     ctx.restore();
 

@@ -1,0 +1,10 @@
+{
+  "id": "warmth-1",
+  "title": "the other one",
+  "mechanic": "warmth",
+  "mood": { "tension": 0.55 },
+  "room": { "scale": 1.6, "open": ["zneg"] },
+  "horizon": 0.16,
+  "params": { "companions": 1, "speed": 150, "followDist": 110, "loseDist": 210 },
+  "intro": "out here, someone is colder than you ever were."
+}

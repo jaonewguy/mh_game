@@ -1,0 +1,10 @@
+{
+  "id": "warmth-3",
+  "title": "everyone home",
+  "mechanic": "warmth",
+  "mood": { "tension": 0.7 },
+  "room": { "scale": 2.0, "open": ["zneg", "xpos"] },
+  "horizon": 0.2,
+  "params": { "companions": 2, "speed": 140, "followDist": 110, "loseDist": 200 },
+  "intro": "there is room at the fire for all of them."
+}

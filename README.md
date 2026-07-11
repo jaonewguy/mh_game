@@ -33,9 +33,17 @@ clarity.
   confrontation or drive them off the edge of the world. One of them
   is faster than your walk; joy's dash (double-tap a direction) is
   how you close the distance.
+- **Chapter Five — Warmth**: the first chapter that isn't about you.
+  Small grey figures shiver alone in wide-open rooms; walk close and
+  they follow — slower than you, so match their pace — and bring each
+  one to the hearth, where color returns to them.
+- **Chapter Six — Clarity**: fog over everything. Ringed vantage
+  points wait in the haze; stand on one, hold still, and a portion of
+  the fog lifts for good — until you can see the whole of it.
 - **Carried abilities**: reclaimed emotions stay with you — calm's
   breath (hold SPACE anywhere), hope's glow and fireflies, joy's dash.
-  Colors wash across floors, plants grow with every color found.
+  Colors wash across floors, plants grow with every color found, and
+  the sun climbs the horizon beyond the missing walls.
 - Adaptive procedural score: an ambient bed that darkens with tension,
   swells with your breathing, a heartbeat pulse, and one generative
   voice per unlocked color.
@@ -118,9 +126,9 @@ node tools/shoot.cjs   # full playthrough, screenshots to tools/out
 
 ## Roadmap
 
-- Chapters 5–6 (warmth, clarity) — gated on the courage playtest
 - The Okami drawing stage (paint with earned colors; your art returns
   in the finale)
+- A true finale beyond the end card — all six colors, the sun up
 - Color bleed-in across previously visited spaces
 - Composed music stems layered over the procedural bed
 - Touch controls + itch.io packaging

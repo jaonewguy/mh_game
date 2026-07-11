@@ -1,0 +1,10 @@
+{
+  "id": "clarity-1",
+  "title": "the fog",
+  "mechanic": "clarity",
+  "mood": { "tension": 0.6 },
+  "room": { "scale": 1.5, "open": ["zneg"] },
+  "horizon": 0.18,
+  "params": { "vantages": 3, "holdSec": 1.2 },
+  "intro": "you can only see a few steps. that was never the whole story."
+}

@@ -127,6 +127,8 @@ export class MenuScene {
       ['with the spark', 'chase it — keep moving'],
       ['dash', 'double-tap a direction (after joy returns)'],
       ['dark shapes', 'walk toward them. they hate that'],
+      ['the cold ones', 'walk close, then lead them to the fire — slowly'],
+      ['in the fog', 'stand on a ring, be still, and look'],
       ['advance text', 'SPACE'],
       ['restart level', 'R'],
       ['menu', 'ESC'],

@@ -1,0 +1,10 @@
+{
+  "id": "warmth-2",
+  "title": "don't rush",
+  "mechanic": "warmth",
+  "mood": { "tension": 0.65 },
+  "room": { "scale": 1.9, "open": ["zneg", "xpos"] },
+  "horizon": 0.18,
+  "params": { "companions": 1, "speed": 112, "followDist": 100, "loseDist": 185 },
+  "intro": "this one is slower. match them."
+}

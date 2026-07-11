@@ -117,13 +117,17 @@ export class CourageMechanic {
         this.shoveMsgT = 3.2; // teach the rule at the moment it bites
       }
 
-      // closed walls stop it; open edges are how it leaves your world
+      // closed walls stop it; open edges are how it leaves your world.
+      // Cornered against a wall it doesn't pin — it skitters sideways
+      // along the wall (consistent direction per shadow).
       const lim = this.scene.room.floorHalf - 18;
       const open = this.scene.room.open;
-      if (sh.x >  lim && !open.has('xpos')) sh.x = lim;
-      if (sh.x < -lim && !open.has('xneg')) sh.x = -lim;
-      if (sh.z >  lim && !open.has('zpos')) sh.z = lim;
-      if (sh.z < -lim && !open.has('zneg')) sh.z = -lim;
+      const slideDir = sh.sway > 5 ? 1 : -1;
+      const slide = confronting ? 240 * dt * slideDir : 0;
+      if (sh.x >  lim && !open.has('xpos')) { sh.x = lim;  sh.z += slide; }
+      if (sh.x < -lim && !open.has('xneg')) { sh.x = -lim; sh.z += slide; }
+      if (sh.z >  lim && !open.has('zpos')) { sh.z = lim;  sh.x += slide; }
+      if (sh.z < -lim && !open.has('zneg')) { sh.z = -lim; sh.x += slide; }
       const off = this.scene.room.floorHalf + 26;
       const offEdge = Math.abs(sh.x) > off || Math.abs(sh.z) > off;
 
@@ -155,29 +159,6 @@ export class CourageMechanic {
   }
 
   figurePose() { return null; }
-
-  // beyond the missing walls, something warm is on the horizon
-  drawBackdrop(ctx, pr) {
-    const room = this.scene.room;
-    const fy = this.scene.floorY;
-    for (const side of room.open) {
-      const dir = {
-        xpos: { x: 1, z: 0 }, xneg: { x: -1, z: 0 },
-        zpos: { x: 0, z: 1 }, zneg: { x: 0, z: -1 },
-      }[side];
-      const c = pr({
-        x: dir.x * room.floorHalf * 2.1,
-        y: fy - 30,
-        z: dir.z * room.floorHalf * 2.1,
-      });
-      const r = room.floorHalf * 2.2;
-      const grad = ctx.createRadialGradient(c.x, c.y, 0, c.x, c.y, r);
-      grad.addColorStop(0, Palette.roleRGBA('joyTrail', 0.13));
-      grad.addColorStop(1, Palette.roleRGBA('joyTrail', 0));
-      ctx.fillStyle = grad;
-      ctx.fillRect(c.x - r, c.y - r, r * 2, r * 2);
-    }
-  }
 
   drawWorld(ctx, pr) {
     const fy = this.scene.floorY;

@@ -130,6 +130,29 @@ export function flora(ctx, pr, half, fy, t) {
   }
 }
 
+// Warm light on the horizon beyond every missing wall — joy's sun,
+// rising a little more with each chapter. strength scales the glow.
+export function horizonGlow(ctx, pr, room, floorY, strength) {
+  const DIRS = {
+    xpos: { x: 1, z: 0 }, xneg: { x: -1, z: 0 },
+    zpos: { x: 0, z: 1 }, zneg: { x: 0, z: -1 },
+  };
+  for (const side of room.open) {
+    const dir = DIRS[side];
+    const c = pr({
+      x: dir.x * room.floorHalf * 2.1,
+      y: floorY - 30,
+      z: dir.z * room.floorHalf * 2.1,
+    });
+    const r = room.floorHalf * 2.2;
+    const grad = ctx.createRadialGradient(c.x, c.y, 0, c.x, c.y, r);
+    grad.addColorStop(0, Palette.roleRGBA('joyTrail', strength));
+    grad.addColorStop(1, Palette.roleRGBA('joyTrail', 0));
+    ctx.fillStyle = grad;
+    ctx.fillRect(c.x - r, c.y - r, r * 2, r * 2);
+  }
+}
+
 // Contact shadow on the floor plane; nearness in (0,1], 1 = touching.
 export function contactShadow(ctx, pr, x, z, floorY, nearness) {
   const p = pr({ x, y: floorY, z });
