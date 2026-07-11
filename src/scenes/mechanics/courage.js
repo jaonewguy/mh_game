@@ -58,6 +58,7 @@ export class CourageMechanic {
 
   update(dt) {
     this.t += dt;
+    if (this.shoveMsgT) this.shoveMsgT = Math.max(0, this.shoveMsgT - dt);
     const s = this.scene.stick;
 
     // player's direction of travel this frame (dash included)
@@ -74,14 +75,26 @@ export class CourageMechanic {
 
       const confronting = pv > 1 &&
         ((pvx / pv) * (tox / d) + (pvz / pv) * (toz / d)) > 0.55;
+      // standing your ground counts too: facing it while still is a
+      // stare-down — it won't come closer, but only approach shrinks it
+      const staring = !confronting && pv <= 1 &&
+        (Math.cos(s.yaw) * (tox / d) + Math.sin(s.yaw) * (toz / d)) > 0.55;
 
       if (confronting) {
-        // every step toward it is a step it loses
-        sh.x += (tox / d) * this.p.retreat * dt;
-        sh.z += (toz / d) * this.p.retreat * dt;
+        // it cannot touch what faces it. It backs off — matching your
+        // pace once you're close, so facing it is always safe — and
+        // the nearer you press, the faster it comes apart.
+        const retreat = d < 150 ? Math.max(this.p.retreat, 270) : this.p.retreat;
+        sh.x += (tox / d) * retreat * dt;
+        sh.z += (toz / d) * retreat * dt;
         if (d < this.p.engageRange) {
-          sh.size -= dt / this.p.shrinkTime;
+          const pressure = Math.min(2.5, this.p.engageRange / Math.max(70, d));
+          sh.size -= (dt / this.p.shrinkTime) * pressure;
         }
+      } else if (staring) {
+        // held by your gaze: it shifts uneasily but gains nothing
+        sh.x += (tox / d) * 26 * dt;
+        sh.z += (toz / d) * 26 * dt;
       } else {
         anyAdvancing = true;
         sh.x -= (tox / d) * this.p.advance * (0.55 + 0.45 * sh.size) * dt;
@@ -89,8 +102,9 @@ export class CourageMechanic {
         sh.size = Math.min(1, sh.size + dt / (this.p.shrinkTime * 3));
       }
 
-      // caught: a shove, not an ending
-      if (d < 28) {
+      // it can only hurt your back: caught while not facing it — a
+      // shove, not an ending
+      if (d < 28 && !confronting && !staring) {
         const push = 95;
         s.x -= (tox / d) * push; // shoved away from the shadow
         s.z -= (toz / d) * push;
@@ -99,6 +113,8 @@ export class CourageMechanic {
         Sfx.miss();
         sh.x += (tox / d) * 140;
         sh.z += (toz / d) * 140;
+        this.shoves = (this.shoves || 0) + 1;
+        this.shoveMsgT = 3.2; // teach the rule at the moment it bites
       }
 
       // closed walls stop it; open edges are how it leaves your world
@@ -204,10 +220,13 @@ export class CourageMechanic {
 
   drawUI(ctx, w, h) {
     if (this.complete) return;
-    if (this.t > 2.5 && this.t < 12 && this.dissolved === 0) {
+    if (this.shoveMsgT > 0 && (this.shoves || 0) <= 2) {
+      haloText(ctx, 'it can only hurt your back. face it.', w / 2, h * 0.74, 15,
+        `rgba(255,255,255,${Math.min(1, this.shoveMsgT)})`);
+    } else if (this.t > 2.5 && this.t < 12 && this.dissolved === 0) {
       const msg = this.p.needDash
         ? 'it is faster than your walk. double-tap a direction — joy remembers how to run.'
-        : 'it grows when you look away. walk toward it.';
+        : 'it grows when you look away. walk toward it — it cannot touch what faces it.';
       haloText(ctx, msg, w / 2, h * 0.8, 14, 'rgba(255,255,255,0.75)');
     }
   }
